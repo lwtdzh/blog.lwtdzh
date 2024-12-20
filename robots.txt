@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+Sitemap: https://blog.lwtdzh.ip-ddns.com/sitemap.xml
+Sitemap: https://blog.lwtdzh.ip-ddns.com/baidusitemap.xml
