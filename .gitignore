@@ -2,3 +2,5 @@ node_modules/
 .wrangler/
 .aone_copilot/
 test-site.mjs
+test-results/
+playwright-report/
