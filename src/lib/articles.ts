@@ -1,16 +1,6 @@
-export interface Article {
-  id?: number;
-  slug: string;
-  title: string;
-  date: string;
-  updated: string;
-  description: string;
-  tags: string; // JSON array string
-  cover: string;
-  content: string;
-  hidden: number; // 0 or 1
-}
+import { articles as allArticleData, ArticleData } from '../generated/articles';
 
+// Re-export the ArticleData type as ArticleMeta for compatibility
 export interface ArticleMeta {
   id: number;
   slug: string;
@@ -20,48 +10,25 @@ export interface ArticleMeta {
   description: string;
   tags: string[];
   cover: string;
-  hidden: number;
+  hidden: boolean;
 }
 
-function parseTags(tagsStr: string): string[] {
-  try {
-    return JSON.parse(tagsStr);
-  } catch {
-    return [];
-  }
-}
-
-function toMeta(row: any): ArticleMeta {
+function toMeta(data: ArticleData, index: number): ArticleMeta {
   return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    date: row.date,
-    updated: row.updated || row.date,
-    description: row.description || '',
-    tags: parseTags(row.tags || '[]'),
-    cover: row.cover || '',
-    hidden: row.hidden || 0,
+    id: index,
+    slug: data.slug,
+    title: data.title,
+    date: data.date,
+    updated: data.updated,
+    description: data.description,
+    tags: data.tags,
+    cover: data.cover,
+    hidden: data.hidden,
   };
 }
 
+// Initialize DB — only visitors + comments tables (articles are in bundled files)
 export async function initDB(db: D1Database): Promise<void> {
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS articles (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      slug TEXT UNIQUE NOT NULL,
-      title TEXT NOT NULL,
-      date TEXT NOT NULL,
-      updated TEXT,
-      description TEXT DEFAULT '',
-      tags TEXT DEFAULT '[]',
-      cover TEXT DEFAULT '',
-      content TEXT DEFAULT '',
-      hidden INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `).run();
-
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS visitors (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,77 +49,63 @@ export async function initDB(db: D1Database): Promise<void> {
   `).run();
 }
 
-// Get all visible articles (no content field for performance)
-export async function getAllArticles(db: D1Database): Promise<ArticleMeta[]> {
-  const { results } = await db.prepare(
-    'SELECT id, slug, title, date, updated, description, tags, cover, hidden FROM articles WHERE hidden = 0 ORDER BY date DESC'
-  ).all();
-  return (results || []).map(toMeta);
+// Get all visible articles (sorted by date desc — already sorted in generated file)
+export function getAllArticles(): ArticleMeta[] {
+  return allArticleData
+    .filter(a => !a.hidden)
+    .map((a, i) => toMeta(a, i));
 }
 
 // Get all articles including hidden (for admin)
-export async function getAllArticlesAdmin(db: D1Database): Promise<ArticleMeta[]> {
-  const { results } = await db.prepare(
-    'SELECT id, slug, title, date, updated, description, tags, cover, hidden FROM articles ORDER BY date DESC'
-  ).all();
-  return (results || []).map(toMeta);
+export function getAllArticlesAdmin(): ArticleMeta[] {
+  return allArticleData.map((a, i) => toMeta(a, i));
 }
 
 // Get paginated articles
-export async function getArticlesPaginated(db: D1Database, page: number, perPage: number = 10): Promise<{ articles: ArticleMeta[]; total: number }> {
-  const countResult = await db.prepare('SELECT COUNT(*) as count FROM articles WHERE hidden = 0').first<{ count: number }>();
-  const total = countResult?.count || 0;
+export function getArticlesPaginated(page: number, perPage: number = 10): { articles: ArticleMeta[]; total: number } {
+  const visible = allArticleData.filter(a => !a.hidden);
+  const total = visible.length;
   const offset = (page - 1) * perPage;
-
-  const { results } = await db.prepare(
-    'SELECT id, slug, title, date, updated, description, tags, cover, hidden FROM articles WHERE hidden = 0 ORDER BY date DESC LIMIT ? OFFSET ?'
-  ).bind(perPage, offset).all();
+  const pageArticles = visible.slice(offset, offset + perPage);
 
   return {
-    articles: (results || []).map(toMeta),
+    articles: pageArticles.map((a, i) => toMeta(a, offset + i)),
     total,
   };
 }
 
 // Get single article by slug (with content)
-export async function getArticleBySlug(db: D1Database, slug: string): Promise<(ArticleMeta & { content: string }) | null> {
-  const row = await db.prepare(
-    'SELECT id, slug, title, date, updated, description, tags, cover, content, hidden FROM articles WHERE slug = ?'
-  ).bind(slug).first();
-
-  if (!row) return null;
-  return { ...toMeta(row), content: (row as any).content || '' };
+export function getArticleBySlug(slug: string): (ArticleMeta & { content: string }) | null {
+  const index = allArticleData.findIndex(a => a.slug === slug);
+  if (index === -1) return null;
+  const a = allArticleData[index];
+  return { ...toMeta(a, index), content: a.content };
 }
 
 // Get articles by tag
-export async function getArticlesByTag(db: D1Database, tag: string): Promise<ArticleMeta[]> {
-  const { results } = await db.prepare(
-    "SELECT id, slug, title, date, updated, description, tags, cover, hidden FROM articles WHERE hidden = 0 AND tags LIKE ? ORDER BY date DESC"
-  ).bind(`%"${tag}"%`).all();
-  return (results || []).map(toMeta);
+export function getArticlesByTag(tag: string): ArticleMeta[] {
+  return allArticleData
+    .filter(a => !a.hidden && a.tags.includes(tag))
+    .map((a, i) => toMeta(a, i));
 }
 
-// Get adjacent articles (prev/next)
-export async function getAdjacentArticles(db: D1Database, date: string): Promise<{ prev: ArticleMeta | null; next: ArticleMeta | null }> {
-  const prevRow = await db.prepare(
-    'SELECT id, slug, title, date, updated, description, tags, cover, hidden FROM articles WHERE hidden = 0 AND date < ? ORDER BY date DESC LIMIT 1'
-  ).bind(date).first();
+// Get adjacent articles (prev/next) based on date
+export function getAdjacentArticles(date: string): { prev: ArticleMeta | null; next: ArticleMeta | null } {
+  const visible = allArticleData.filter(a => !a.hidden);
+  // Articles are sorted date DESC, so "prev" (older) is the next index, "next" (newer) is the previous index
+  const currentIndex = visible.findIndex(a => a.date === date);
 
-  const nextRow = await db.prepare(
-    'SELECT id, slug, title, date, updated, description, tags, cover, hidden FROM articles WHERE hidden = 0 AND date > ? ORDER BY date ASC LIMIT 1'
-  ).bind(date).first();
+  const prev = currentIndex < visible.length - 1 ? toMeta(visible[currentIndex + 1], currentIndex + 1) : null;
+  const next = currentIndex > 0 ? toMeta(visible[currentIndex - 1], currentIndex - 1) : null;
 
-  return {
-    prev: prevRow ? toMeta(prevRow) : null,
-    next: nextRow ? toMeta(nextRow) : null,
-  };
+  return { prev, next };
 }
 
 // Get all tags with counts
-export async function getAllTags(db: D1Database): Promise<{ tag: string; count: number }[]> {
-  const articles = await getAllArticles(db);
+export function getAllTags(): { tag: string; count: number }[] {
+  const visible = allArticleData.filter(a => !a.hidden);
   const tagMap = new Map<string, number>();
-  for (const article of articles) {
+  for (const article of visible) {
     for (const tag of article.tags) {
       tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
     }
@@ -161,50 +114,11 @@ export async function getAllTags(db: D1Database): Promise<{ tag: string; count: 
 }
 
 // Get article count
-export async function getArticleCount(db: D1Database): Promise<number> {
-  const result = await db.prepare('SELECT COUNT(*) as count FROM articles WHERE hidden = 0').first<{ count: number }>();
-  return result?.count || 0;
+export function getArticleCount(): number {
+  return allArticleData.filter(a => !a.hidden).length;
 }
 
 // Get tag count
-export async function getTagCount(db: D1Database): Promise<number> {
-  const tags = await getAllTags(db);
-  return tags.length;
-}
-
-// Upsert article
-export async function upsertArticle(db: D1Database, article: Omit<Article, 'id'>): Promise<void> {
-  await db.prepare(`
-    INSERT INTO articles (slug, title, date, updated, description, tags, cover, content, hidden)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(slug) DO UPDATE SET
-      title = excluded.title,
-      date = excluded.date,
-      updated = excluded.updated,
-      description = excluded.description,
-      tags = excluded.tags,
-      cover = excluded.cover,
-      content = excluded.content,
-      hidden = excluded.hidden
-  `).bind(
-    article.slug, article.title, article.date, article.updated || '',
-    article.description || '', article.tags || '[]', article.cover || '',
-    article.content || '', article.hidden || 0
-  ).run();
-}
-
-// Delete article
-export async function deleteArticle(db: D1Database, id: number): Promise<void> {
-  await db.prepare('DELETE FROM articles WHERE id = ?').bind(id).run();
-}
-
-// Toggle hidden
-export async function toggleHidden(db: D1Database, id: number): Promise<void> {
-  await db.prepare('UPDATE articles SET hidden = CASE WHEN hidden = 0 THEN 1 ELSE 0 END WHERE id = ?').bind(id).run();
-}
-
-// Get article content for excerpt
-export async function getArticleExcerpt(db: D1Database, slug: string): Promise<string> {
-  const row = await db.prepare('SELECT content FROM articles WHERE slug = ?').bind(slug).first<{ content: string }>();
-  return row?.content || '';
+export function getTagCount(): number {
+  return getAllTags().length;
 }

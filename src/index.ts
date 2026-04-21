@@ -13,7 +13,7 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Initialize DB tables on first request
+// Initialize DB tables (visitors + comments only) on first request
 app.use('*', async (c, next) => {
   try {
     await initDB(c.env.DB);

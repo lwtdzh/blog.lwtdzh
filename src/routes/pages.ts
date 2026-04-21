@@ -7,26 +7,20 @@ import { renderPostPage } from '../templates/post';
 import { renderArchivePage } from '../templates/archive';
 import { renderTagPage } from '../templates/tag';
 
-type Bindings = {
-  DB: D1Database;
-};
-
-const pages = new Hono<{ Bindings: Bindings }>();
+const pages = new Hono();
 
 const PER_PAGE = 10;
 
 // Homepage
-pages.get('/', async (c) => {
-  const db = c.env.DB;
-  const { articles, total } = await getArticlesPaginated(db, 1, PER_PAGE);
+pages.get('/', (c) => {
+  const { articles, total } = getArticlesPaginated(1, PER_PAGE);
   const totalPages = Math.ceil(total / PER_PAGE);
-  const postCount = await getArticleCount(db);
-  const tagCount = await getTagCount(db);
+  const postCount = getArticleCount();
+  const tagCount = getTagCount();
 
-  // Build excerpts
   const excerpts = new Map<string, string>();
   for (const article of articles) {
-    const full = await getArticleBySlug(db, article.slug);
+    const full = getArticleBySlug(article.slug);
     if (full) {
       excerpts.set(article.slug, getExcerpt(full.content));
     }
@@ -44,17 +38,16 @@ pages.get('/', async (c) => {
 });
 
 // Paginated homepage
-pages.get('/page/:num/', async (c) => {
+pages.get('/page/:num/', (c) => {
   const page = parseInt(c.req.param('num')) || 1;
-  const db = c.env.DB;
-  const { articles, total } = await getArticlesPaginated(db, page, PER_PAGE);
+  const { articles, total } = getArticlesPaginated(page, PER_PAGE);
   const totalPages = Math.ceil(total / PER_PAGE);
-  const postCount = await getArticleCount(db);
-  const tagCount = await getTagCount(db);
+  const postCount = getArticleCount();
+  const tagCount = getTagCount();
 
   const excerpts = new Map<string, string>();
   for (const article of articles) {
-    const full = await getArticleBySlug(db, article.slug);
+    const full = getArticleBySlug(article.slug);
     if (full) {
       excerpts.set(article.slug, getExcerpt(full.content));
     }
@@ -72,11 +65,10 @@ pages.get('/page/:num/', async (c) => {
 });
 
 // Archives
-pages.get('/archives/', async (c) => {
-  const db = c.env.DB;
-  const articles = await getAllArticles(db);
+pages.get('/archives/', (c) => {
+  const articles = getAllArticles();
   const postCount = articles.length;
-  const tagCount = await getTagCount(db);
+  const tagCount = getTagCount();
 
   const content = renderArchivePage(articles);
   const html = renderLayout({
@@ -89,13 +81,12 @@ pages.get('/archives/', async (c) => {
 });
 
 // Archives by year
-pages.get('/archives/:year/', async (c) => {
+pages.get('/archives/:year/', (c) => {
   const year = c.req.param('year');
-  const db = c.env.DB;
-  const allArticles = await getAllArticles(db);
-  const articles = allArticles.filter(a => a.date.startsWith(year));
-  const postCount = allArticles.length;
-  const tagCount = await getTagCount(db);
+  const allArticlesList = getAllArticles();
+  const articles = allArticlesList.filter(a => a.date.startsWith(year));
+  const postCount = allArticlesList.length;
+  const tagCount = getTagCount();
 
   const content = renderArchivePage(articles, year);
   const html = renderLayout({
@@ -108,14 +99,13 @@ pages.get('/archives/:year/', async (c) => {
 });
 
 // Archives by year/month
-pages.get('/archives/:year/:month/', async (c) => {
+pages.get('/archives/:year/:month/', (c) => {
   const year = c.req.param('year');
   const month = c.req.param('month');
-  const db = c.env.DB;
-  const allArticles = await getAllArticles(db);
-  const articles = allArticles.filter(a => a.date.startsWith(`${year}-${month}`));
-  const postCount = allArticles.length;
-  const tagCount = await getTagCount(db);
+  const allArticlesList = getAllArticles();
+  const articles = allArticlesList.filter(a => a.date.startsWith(`${year}-${month}`));
+  const postCount = allArticlesList.length;
+  const tagCount = getTagCount();
 
   const content = renderArchivePage(articles, year, month);
   const html = renderLayout({
@@ -128,12 +118,11 @@ pages.get('/archives/:year/:month/', async (c) => {
 });
 
 // Tag page
-pages.get('/tags/:tag/', async (c) => {
+pages.get('/tags/:tag/', (c) => {
   const tag = decodeURIComponent(c.req.param('tag'));
-  const db = c.env.DB;
-  const articles = await getArticlesByTag(db, tag);
-  const postCount = await getArticleCount(db);
-  const tagCount = await getTagCount(db);
+  const articles = getArticlesByTag(tag);
+  const postCount = getArticleCount();
+  const tagCount = getTagCount();
 
   const content = renderTagPage(tag, articles);
   const html = renderLayout({
@@ -146,7 +135,7 @@ pages.get('/tags/:tag/', async (c) => {
 });
 
 // Single article page — matches patterns like /2024/12/05/jpsub/eromanga/
-pages.get('/:year/:month/:day/:category/:slug/', async (c) => {
+pages.get('/:year/:month/:day/:category/:slug/', (c) => {
   const year = c.req.param('year');
   const month = c.req.param('month');
   const day = c.req.param('day');
@@ -154,16 +143,15 @@ pages.get('/:year/:month/:day/:category/:slug/', async (c) => {
   const slug = c.req.param('slug');
   const fullSlug = `${year}/${month}/${day}/${category}/${slug}`;
 
-  const db = c.env.DB;
-  const article = await getArticleBySlug(db, fullSlug);
+  const article = getArticleBySlug(fullSlug);
   if (!article) {
     return c.text('Article not found', 404);
   }
 
   const htmlContent = renderMarkdown(article.content);
-  const { prev, next } = await getAdjacentArticles(db, article.date);
-  const postCount = await getArticleCount(db);
-  const tagCount = await getTagCount(db);
+  const { prev, next } = getAdjacentArticles(article.date);
+  const postCount = getArticleCount();
+  const tagCount = getTagCount();
 
   const content = renderPostPage(article, htmlContent, prev, next);
   const html = renderLayout({

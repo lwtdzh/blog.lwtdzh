@@ -1,15 +1,10 @@
 import { Hono } from 'hono';
 import { getAllArticles } from '../lib/articles';
 
-type Bindings = {
-  DB: D1Database;
-};
+const sitemap = new Hono();
 
-const sitemap = new Hono<{ Bindings: Bindings }>();
-
-sitemap.get('/sitemap.xml', async (c) => {
-  const db = c.env.DB;
-  const articles = await getAllArticles(db);
+sitemap.get('/sitemap.xml', (c) => {
+  const articles = getAllArticles();
   const baseUrl = 'https://blog.lwtdzh.ip-ddns.com';
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -50,9 +45,8 @@ Sitemap: https://blog.lwtdzh.ip-ddns.com/sitemap.xml`;
   return c.text(body, 200, { 'Content-Type': 'text/plain' });
 });
 
-sitemap.get('/baidusitemap.xml', async (c) => {
-  const db = c.env.DB;
-  const articles = await getAllArticles(db);
+sitemap.get('/baidusitemap.xml', (c) => {
+  const articles = getAllArticles();
   const baseUrl = 'https://blog.lwtdzh.ip-ddns.com';
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
