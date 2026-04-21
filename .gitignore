@@ -1,5 +1,4 @@
 node_modules/
-package.json
-package-lock.json
-tests/
-scripts/
+.wrangler/
+.aone_copilot/
+test-site.mjs

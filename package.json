@@ -1,0 +1,29 @@
+{
+  "name": "blog-lwtdzh",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public --d1 DB=blog-db --compatibility-date=2024-01-01",
+    "deploy": "wrangler pages deploy public",
+    "sync": "npx tsx scripts/sync-articles.ts > scripts/sync-articles.sql && echo 'SQL generated at scripts/sync-articles.sql'",
+    "sync:local": "npx tsx scripts/sync-articles.ts | npx wrangler d1 execute blog-db --local --command=-",
+    "build": "npx tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github-lwtdzh:lwtdzh/blog.lwtdzh.git"
+  },
+  "dependencies": {
+    "hono": "^4.4.0",
+    "marked": "^12.0.0",
+    "front-matter": "^4.0.2",
+    "playwright": "^1.59.1"
+  },
+  "devDependencies": {
+    "wrangler": "^3.60.0",
+    "@cloudflare/workers-types": "^4.20240620.0",
+    "typescript": "^5.5.0",
+    "tsx": "^4.15.0"
+  }
+}
