@@ -4,5 +4,5 @@ pages_build_output_dir = "public"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "blog-db"
-database_id = "placeholder-replace-with-actual-id"
+database_name = "blog-lwtdzh"
+database_id = "95321313-2b28-4a20-a506-4d594fab6593"
