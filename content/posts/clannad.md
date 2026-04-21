@@ -9,6 +9,7 @@ cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/202412191946
 hidden: false
 ---
 
+
 CLANNAD Season 1 + Season 2 bilingual subtitles (Chinese and Japanese).
 CLANNAD シーズン1 + シーズン2 中日二言語字幕（中国語と日本語）。
 
@@ -19,17 +20,14 @@ CLANNAD シーズン1 + シーズン2 中日二言語字幕（中国語と日本
 ![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219194651228.webp)
 
 #### 片名、译名
-
 CLANNAD -クラナド-(1期)
-CLANNAD 〜AFTER STORY〜
+CLANNAD ～AFTER STORY～
 团子大家族
 
 #### 来源说明
-
-简日繁日中日，双语，日语字幕。本帖为转载。原贴地址：[雪飘_澄空_NF-GL]CLANNAD S1+S2[简日·繁日双语字幕] - ACG字幕分享 - Anime字幕论坛 - Powered by Discuz! (acgrip.com) - [https://bbs.acgrip.com/thread-5880-1-1.html](https://bbs.acgrip.com/thread-5880-1-1.html)
+简日繁日中日，双语，日语字幕。本帖为转载。原贴地址：[雪飘_澄空_NF-GL]CLANNAD S1+S2[简日·繁日双语字幕] - ACG字幕分享 - Anime字幕论坛 - Powered by Discuz! (acgrip.com) - https://bbs.acgrip.com/thread-5880-1-1.html
 
 #### 下载地址（Download link，ダウンロードリンク）
-
 [Origin](https://bbs.acgrip.com/thread-5880-1-1.html)
 [Lanzou](https://wwqq.lanzoub.com/b0r9gejhi)，password: 3x2g
 [Baidu](https://pan.baidu.com/s/1yeiRf-YN2UpxIUqxBXkcvA?pwd=zuh6)

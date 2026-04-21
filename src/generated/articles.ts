@@ -25,7 +25,7 @@ export const articles: ArticleData[] = [
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250618202141352.jpg",
     hidden: false,
     content: `"The Rising of the Shield Hero" Season 1: JP Subs, Simplified CN Subs, JP-CN Dual Subs​.
-「盾の勇者の成り上がり」 第1期 日本語字幕／简体字字幕／日中双语字幕​。
+「盾の勇者の成り上がり」 第1期 日本語字幕／簡体字字幕／日中双语字幕​。
 
 <!-- more -->
 
@@ -33,21 +33,18 @@ export const articles: ArticleData[] = [
 
 ![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250618202141352.jpg)
 
-#### 片名、译名
 
+#### 片名、译名
 The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上がり。
 
 #### 来源说明
-
-简体中文字幕来自樱都字幕组。
+简体中文字幕来自桜都字幕组。
 
 #### 下载地址（Download link，ダウンロードリンク）
-
 [Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E7%9B%BE%E4%B9%8B%E5%8B%87%E8%80%85%E6%88%90%E5%90%8D%E5%BD%95%E7%AC%AC%E4%B8%80%E5%AD%A3.zip)
 [Lanzou](https://wwqq.lanzoub.com/iF90I2z2kyrg)，密码：gwa3
 
 #### 播放效果
-
 ![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250618202748094.jpg)`,
   },
   {
@@ -62,7 +59,28 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     content: `"Love Live! School Idol Project" Season 1 (S1) - Simplified Chinese & Japanese Bilingual Subtitles, Japanese Subtitles, Chinese-Japanese Subtitles
 「ラブライブ！ School Idol Project」第1期 S1 簡体字・日本語バイリンガル字幕、日本語字幕、中日字幕
 
-<!-- more -->`,
+<!-- more -->
+
+## 「Love Live! School Idol Project」第一季 S1 简日双语字幕、日文字幕、中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250509204216506.jpe)
+
+#### 片名、译名
+ラブライブ！ School Idol Project，Love Live! School Idol Project，爱与演唱会 学园偶像企划第一季。
+
+#### 来源说明
+简体字幕来自 acgrip bbs user: 划水的小猫咪，日文字幕为原创自制。
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwqq.lanzoub.com/i8IFU2vsg5le)，password: gzpb
+[Baidu](https://pan.baidu.com/s/1mTv78b3LHkregi8VYi4qTQ?pwd=87wf)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/LoveLive!S1%CE%BCs.zip)
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250509204229601.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250509204250522.jpg)`,
   },
   {
     slug: "2025/03/17/jpsub/the-art",
@@ -76,7 +94,29 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     content: `"Chinese-Japanese Bilingual Subtitles 'This Art Club Has a Problem!' Simplified Japanese, Japanese Subtitles"
 「中日二重字幕『この美術部には大きな問題がある！』簡体字日本語、日本語字幕」
 
-<!-- more -->`,
+<!-- more -->
+
+## 中日双语字幕「这个美术社大有问题！」简日、日语字幕
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250317211626071.png)
+
+#### 片名、译名
+『この美術部には大きな問題がある！』
+This Art Club Has a Problem!
+Kono Bijutsubu ni wa Mondai ga Aru!
+
+#### 来源说明
+中文字幕来自于动漫国字幕组，日文字幕为自制
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwqq.lanzoub.com/i8fSl2qvaddg)，password: 1p3s
+[123](https://www.123684.com/s/VCIojv-o3Ma3)，password: rXJh
+[Baidu](https://pan.baidu.com/s/1-QzZ3efxSvjNRyhvHiERew?pwd=w3en)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E8%BF%99%E4%B8%AA%E7%BE%8E%E6%9C%AF%E7%A4%BE%E5%A4%A7%E6%9C%89%E9%97%AE%E9%A2%98.zip)
+[bilibili](https://www.bilibili.com/opus/1045304046726938660)
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250317211631324.jpg)`,
   },
   {
     slug: "2024/12/19/rambling/thirty-years-old-write-to-myself",
@@ -89,7 +129,54 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     hidden: true,
     content: `盘点一些二次元人物今天的年龄。
 
-<!-- more -->`,
+<!-- more -->
+
+花了一些时间，做了一个二次元人物年龄盘点，上面数字显示的是他们在我满30周岁当天(2024年12月19日)时的年龄。
+他们多大了？我今年第一次思考这个问题。诚然，他们永远都不会长大，变老的只有我们，但是假如我们的时空是一致的呢？
+人物太多了，图片就那么大，只能塞我认识的其中一小小部分了，里面有你认识的角色么？
+
+#### B站视频版
+（4分钟带你看80位动漫角色2025年的年龄）：[【盘点】动漫人物年龄，截止2024年12月31日](https://www.bilibili.com/video/BV1amcgeyEJF)
+（15分钟完整版，包含290名角色）：[【盘点】动漫人物年龄，截止2024年12月31日（完整催眠版）](https://www.bilibili.com/video/BV1WZcbeDEDM)
+
+#### 主图
+（图片很大，国外CDN，慢慢加载。可以右键保存，里面有我，不喜欢可以用橡皮擦擦掉）
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250116225928765.jpg)
+（去掉我）
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250116222855892.jpg)
+#### 附图：左
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250116223020156.jpg)
+
+#### 附图：左中
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250116223025537.jpg)
+
+#### 附图：中
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250116223029598.jpg)
+
+#### 附图：中右
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250116222952052.jpg)
+
+#### 附图:右
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20250116223044121.jpg)
+
+#### 附图：和京阿尼的角色们合影
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219215127453.jpg)
+
+#### 附图：做大梦
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219215153794.jpg)
+
+#### 附图：摇滚、露营与幻想（都有粉毛）
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219215233620.jpg)
+
+#### 附图：看着90年代当红的角色们
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219215302433.jpg)
+
+#### 年龄计算方式
+1. 如果有官方出生日期设定，则直接使用
+2. 如果没有官方出生日期设定，按照人物第一次登场的时间作为基准时间（有多种载体的，按照其中漫画、小说、动画、游戏等第一次出现的时间计算），然后结合人物年龄设定计算
+例如，A 角色位于作品《B》中，年龄是16岁。其中《B》有漫画、动画、小说，而其中小说最先于2012年年中出版，则按小说出现时间2012年年中为基准，角色2012年年中为16岁，则2024年12月19日为28岁
+3. 如果没有官方年龄设定，则根据角色第一次出现的学年来猜测角色年龄设定，其中小五为10岁，高一（日：高校1年）为15岁，大一（日：大学1年）为18岁
+4. 如果角色没有学年设定，或者时代背景明显不符合当代的（例如《狼与香辛料》、《间谍过家家》肯定不是当代背景），则不会被本选题候选`,
   },
   {
     slug: "2024/12/05/jpsub/eromanga",
@@ -103,7 +190,34 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     content: `"Eromanga Sensei" dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
 「エロマンガ先生」二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）。
 
-<!-- more -->`,
+<!-- more -->
+
+## 「埃罗芒阿老师」简日双语字幕、日文字幕、中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219204910311.png)
+
+#### 片名、译名
+エロマンガ先生
+埃罗芒阿老师
+我的妹妹是黃漫老師
+情色漫畫老師
+Eromanga Sensei
+
+#### 来源说明
+简体精修字幕来自 Anime 字幕论坛用户 lz007001，原始帖子链接：
+https://bbs.acgrip.com/forum.php?mod=viewthread&tid=5565
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwqq.lanzoub.com/imEfc2haz1lc)，password: 9bbd
+[Baidu](https://pan.baidu.com/s/1rL5UnTzgCg3oUlK9M-u4Cw?pwd=hvwn)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E5%9F%83%E7%BD%97%E8%8A%92%E9%98%BF%E8%80%81%E5%B8%88.zip)
+[bilibili]链接已被阿瓦隆
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219204636782.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219204636869.jpg)`,
   },
   {
     slug: "2024/10/30/jpsub/shirobako",
@@ -117,7 +231,32 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     content: `"SHIROBAKO" dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
 「SHIROBAKO」二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）。
 
-<!-- more -->`,
+<!-- more -->
+
+## 「白箱 SHIROBAKO」简日双语字幕、日文字幕、中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219202745029.webp)
+
+#### 片名、译名
+SHIROBAKO
+シロバコ
+白箱
+白盒
+
+#### 来源说明
+中文字幕来自 CASO，日文字幕为原创。时间轴对齐 VCB-Studio，视频资源种子见压缩包，也可自行前往dmhy.org(内地请在搜索引擎查询镜像站)下载。
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwqq.lanzoub.com/ic9j12drnafg)，password: 9e4u
+[Baidu](https://pan.baidu.com/s/1fd4v8eMCRq7KKm1N2T6Qrw?pwd=yur8)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E7%99%BD%E7%AE%B1.zip)
+[bilibili](https://www.bilibili.com/opus/994090684879208457)
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219203200670.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219203203487.jpg)`,
   },
   {
     slug: "2024/09/17/jpsub/kyokosuiri",
@@ -131,7 +270,30 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     content: `"In Spectre" Season 1 dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
 「虚構推理」シーズン1 二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）
 
-<!-- more -->`,
+<!-- more -->
+
+## 「虚构推理」第一季 简日双语字幕、日文字幕、中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219201932955.webp)
+
+#### 片名、译名
+虚構推理
+In Spectre
+
+#### 来源说明
+双语字幕，其中时间轴和中文来自喵萌奶茶屋的字幕。时间轴对齐 VCB。目前网上有该片双语字幕片源，但均为内嵌字幕，无法提取文本，于是想着做一个可提取文本的版本。这个动画的日语用词也很值得外国人学习。
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwqq.lanzoub.com/iNswu2a6s0jg)，password: fvni
+[Baidu](https://pan.baidu.com/s/1lV_DkV0SnTbQwpOj0PWxUQ?pwd=gi4m)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E8%99%9A%E6%9E%84%E6%8E%A8%E7%90%86S1%E5%8F%8C%E8%AF%AD%E5%AD%97%E5%B9%95.zip)
+[bilibili](https://www.bilibili.com/opus/978111817385508872)
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219202455666.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219202455757.jpg)`,
   },
   {
     slug: "2024/09/02/jpsub/baixue",
@@ -143,9 +305,31 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219201132724.webp",
     hidden: false,
     content: `"White Album" Season 1 and Season 2 dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
-「ホワイトアルバム」第1期、第二期 二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国
+「ホワイトアルバム」第1期、第二期 二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）。
 
-<!-- more -->`,
+<!-- more -->
+
+## 「白色相簿」第一季、第二季 简日双语字幕、日文字幕、中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219201132724.webp)
+
+#### 片名、译名
+ホワイトアルバム，白色相簿，WHITE ALBUM。
+
+#### 来源说明
+S1简体中文字幕来自澄空学园，S2转载自诸神字幕组。
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwqq.lanzoub.com/iH0T528vvemj)，password: 628b
+[Baidu](https://pan.baidu.com/s/1IvR_K_LmE4w1nHXnwuY6uA?pwd=fayx)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E7%99%BD%E8%89%B2%E7%9B%B8%E7%B0%BF.zip)
+[bilibili](https://www.bilibili.com/opus/972396869464358931)
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219201519517.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219201519566.jpg)`,
   },
   {
     slug: "2024/08/18/jpsub/k-on",
@@ -159,7 +343,25 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     content: `"Kin-iro Mosaic" dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
 「きんいろモザイク」二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）。
 
-<!-- more -->`,
+<!-- more -->
+
+## 「轻音少女」第一季、第二季 简日双语字幕、日文字幕、中日双语字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219200128625.webp)
+
+#### 片名、译名
+けいおん！ 轻音少女!(1期)
+けいおん！！ 轻音少女!!(2期)
+映画「けいおん！」 电影K-ON! 电影轻音少女 K-ON! 剧场版 轻音少女剧场版
+
+#### 来源说明
+中日字幕均为转载，新增纯日文字幕，更符合生肉爱好者习性。原始来源在压缩包内均有注明，如转载请标记出处。
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwqq.lanzoub.com/iZMrL27ndwtc)，password: 51rk
+[Baidu](https://pan.baidu.com/s/1xw75HlF5iesAsTg1iqKUkQ?pwd=n7xw)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E8%BD%BB%E9%9F%B3.zip)
+[bilibili](https://www.bilibili.com/opus/966911316004438018)`,
   },
   {
     slug: "2024/08/17/jpsub/KinIroMosaic",
@@ -173,7 +375,26 @@ The Rising of the Shield Hero，盾之勇者成名录，盾の勇者の成り上
     content: `"Kin-iro Mosaic" dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
 「きんいろモザイク」二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）。
 
-<!-- more -->`,
+<!-- more -->
+
+## 「黄金拼图」剧场版+TV版 简日双语字幕、日文字幕、中日双语字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219195506368.webp)
+
+#### 片名、译名
+1期:きんいろモザイク 1期:黄金拼图
+2期:ハロー!!きんいろモザイク 2期:Hello!!黄金拼图
+特别篇《黄金拼图 Pretty Days》 きんいろモザイク Pretty Days
+剧场版《黄金拼图 Thank you!!》 きんいろモザイク Thank you!!
+
+#### 来源说明
+压缩包内已注明字幕来源，如转载请标明出处。非标注来源部分为自制。
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwqq.lanzoub.com/ivOgP27nbk8h)，password: 8fui
+[Baidu](https://pan.baidu.com/s/14Wzo_aTgJmQYGwT8aFw3sw?pwd=g36e)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E9%BB%84%E9%87%91%E6%8B%BC%E5%9B%BE.zip)
+[bilibili](https://www.bilibili.com/opus/966567129978503168)`,
   },
   {
     slug: "2024/08/14/jpsub/clannad",
@@ -194,17 +415,14 @@ CLANNAD シーズン1 + シーズン2 中日二言語字幕（中国語と日本
 ![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219194651228.webp)
 
 #### 片名、译名
-
 CLANNAD -クラナド-(1期)
-CLANNAD 〜AFTER STORY〜
+CLANNAD ～AFTER STORY～
 团子大家族
 
 #### 来源说明
-
-简日繁日中日，双语，日语字幕。本帖为转载。原贴地址：[雪飘_澄空_NF-GL]CLANNAD S1+S2[简日·繁日双语字幕] - ACG字幕分享 - Anime字幕论坛 - Powered by Discuz! (acgrip.com) - [https://bbs.acgrip.com/thread-5880-1-1.html](https://bbs.acgrip.com/thread-5880-1-1.html)
+简日繁日中日，双语，日语字幕。本帖为转载。原贴地址：[雪飘_澄空_NF-GL]CLANNAD S1+S2[简日·繁日双语字幕] - ACG字幕分享 - Anime字幕论坛 - Powered by Discuz! (acgrip.com) - https://bbs.acgrip.com/thread-5880-1-1.html
 
 #### 下载地址（Download link，ダウンロードリンク）
-
 [Origin](https://bbs.acgrip.com/thread-5880-1-1.html)
 [Lanzou](https://wwqq.lanzoub.com/b0r9gejhi)，password: 3x2g
 [Baidu](https://pan.baidu.com/s/1yeiRf-YN2UpxIUqxBXkcvA?pwd=zuh6)
@@ -220,7 +438,39 @@ CLANNAD 〜AFTER STORY〜
     tags: ["中日双语字幕"],
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219194006078.webp",
     hidden: false,
-    content: ``,
+    content: `"Is the Order a Rabbit?" dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
+「ご注文はうさぎですか？」二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）。
+
+<!-- more -->
+
+## 「请问您今天要来点兔子吗？」剧场版+OVA+TV 简日双语字幕、日文字幕、中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219194006078.webp)
+
+#### 片名、译名
+1期 ご注文はうさぎですか？ 请问您今天要来点兔子吗？
+2期 ご注文はうさぎですか？？ 请问您今天要来点兔子吗？？
+3期 ご注文はうさぎですか？BLOOM 请问您今天要来点兔子吗？BLOOM
+OVA1 ご注文はうさぎですか？？ 〜Dear My Sister〜 请问您今天要来点兔子吗？？ ～Dear My Sister～
+OVA2 ご注文はうさぎですか？？ 〜Sing For You〜 请问您今天要来点兔子吗？？ ～Sing For You～
+Is the Order a Rabbit
+Gochuumon wa Usagi desu ka
+点兔／ごちうさ／GochiUsa
+
+#### 来源说明
+字幕一大半为白嫖。其中 S1，S2，S3 为白嫖字幕组字幕，并根据字幕组的双语字幕制作了仅日文的字幕。OVA-sing for you，剧场版-dear my sister 借用了字幕组的时间轴和中文字幕。字幕制作比较粗矿，没有进行任何美化，以实用为主。具体嫖了哪些字幕组的成果，在对应文件中均有表明，由于涉及版权问题这里就不大肆宣扬字幕组名称，请在下载后24小时内偷偷删除即可。
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwl.lanzoub.com/b0r9ew3ta)，password: 3gpp
+[Baidu](https://pan.baidu.com/s/1FjEAShyfuAC4cDKWggACGA?pwd=t7qt)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E7%82%B9%E5%85%94.zip)
+[bilibili]已被阿瓦隆
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219194335866.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219194335904.jpg)`,
   },
   {
     slug: "2024/07/27/jpsub/miaonei",
@@ -231,7 +481,36 @@ CLANNAD 〜AFTER STORY〜
     tags: ["中日双语字幕"],
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219192940665.jpg",
     hidden: false,
-    content: ``,
+    content: `"Wataten!: An Angel Flew Down to Me" dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
+「私に天使が舞い降りた！」二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）。
+
+<!-- more -->
+
+## 「天使降临到我身边！」简日双语字幕、日文字幕、中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219192940665.jpg)
+
+#### 片名、译名
+天使降临到了我的身边！
+天使降临到了我身边！
+天使降临到我身边！
+私に天使が舞い降りた！
+Wataten!: An Angel Flew Down to Me
+
+#### 来源说明
+中文字幕来源：Airota，动画原片下载地址（含Airota封装的原始字幕）已包含在下方。时间轴基于BD，每集23:40。
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwl.lanzoub.com/b0r9es9kd)，password: i3ra
+[Baidu](https://pan.baidu.com/s/1CXgJ3Olf7DvMJGynkmtZHQ?pwd=s6hh)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E5%A4%A9%E4%BD%BF%E9%99%8D%E4%B8%B4%E5%88%B0%E6%88%91%E8%BA%AB%E8%BE%B9.zip)
+[bilibili](https://www.bilibili.com/opus/958782841045385218)
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218221212363.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218221212420.jpg)`,
   },
   {
     slug: "2024/07/16/jpsub/blends",
@@ -242,7 +521,35 @@ CLANNAD 〜AFTER STORY〜
     tags: ["中日双语字幕"],
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219193220117.webp",
     hidden: false,
-    content: ``,
+    content: `"Blend S" dual-language subtitles (Japanese and Chinese), Japanese subtitles, and bilingual subtitles (Chinese and Japanese).
+「ブレンド・S」二言語字幕（日本語と中国語）、日本語字幕、および中日字幕（中国語と日本語）。
+
+<!-- more -->
+
+## 「调教咖啡厅」简日双语字幕、日文字幕、中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219193220117.webp)
+
+#### 片名、译名
+調教咖啡廳
+调教咖啡厅
+Blend・S
+ブレンド・S
+
+#### 来源说明
+中文字幕来自轻之国度字幕组：[https://www.404.website/thread-3308-1-1.html](https://www.404.website/thread-3308-1-1.html)
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://wwl.lanzoub.com/b0r9dws8d)，password: eegm
+[Baidu](https://pan.baidu.com/s/1NDW1R8VN1v7wYyGv6wJBRQ?pwd=v4d8)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E8%B0%83%E6%95%99%E5%92%96%E5%95%A1%E5%8E%85.zip)
+[bilibili]已被阿瓦隆
+
+#### 播放效果
+###### 簡體+日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218214750717.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218214753837.jpg)`,
   },
   {
     slug: "2024/07/04/jpsub/kobayashiS2",
@@ -253,7 +560,35 @@ CLANNAD 〜AFTER STORY〜
     tags: ["中日双语字幕"],
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219193314975.jpg",
     hidden: false,
-    content: ``,
+    content: `「小林さんちのメイドラゴンS」第2期の簡日バイリンガル字幕、日本語字幕、中日字幕、繁体字日本語字幕
+The first season of "Miss Kobayashi's Dragon Maid S" with simplified Chinese-Japanese bilingual subtitles, Japanese subtitles, Chinese-Japanese subtitles, and traditional Chinese-Japanese subtitles.
+
+<!-- more -->
+
+## 「小林家的龙女仆S」第二季简日双语字幕、日文字幕、中日字幕、繁日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219193314975.jpg)
+
+#### 片名、译名
+小林さんちのメイドラゴンS
+Miss Kobayashi's Dragon Maid S
+小林家的妹抖龙S
+小林家的女僕龍S、小林家的妹抖龍S
+
+#### 来源说明
+中文字幕来源：[悠哈璃羽字幕社&VCB-Studio] ：https://dmhy.b168.net/topics/view/610181_VCB-Studio_Kobayashi-san_Chi_no_Meidoragon_S_S_S_10-bit_1080p_HEVC_BDRip_S2_Fin.html
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://www.lanzoub.com/b0r9cw6da)，password: ap54
+[Baidu](https://pan.baidu.com/s/1L7lWo-qfZHb2OSePc4wbMA?pwd=51g3)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E5%B0%8F%E6%9E%97%E5%AE%B6%E7%9A%84%E9%BE%8D%E5%A5%B3%E5%83%95S2.zip)
+[bilibili](已被阿瓦隆，這也是開本博客的原因)
+
+#### 播放效果
+###### 簡日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218210929266.jpg)
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218210934187.jpg)`,
   },
   {
     slug: "2024/06/14/jpsub/kobayashiS1",
@@ -264,7 +599,35 @@ CLANNAD 〜AFTER STORY〜
     tags: ["中日双语字幕"],
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219193314975.jpg",
     hidden: false,
-    content: ``,
+    content: `「小林さんちのメイドラゴン」第1期の簡日バイリンガル字幕、日本語字幕、中日字幕、繁体字日本語字幕
+The first season of "Miss Kobayashi's Dragon Maid" with simplified Chinese-Japanese bilingual subtitles, Japanese subtitles, Chinese-Japanese subtitles, and traditional Chinese-Japanese subtitles.
+
+<!-- more -->
+
+## 「小林家的龙女仆」第一季简日双语字幕、日文字幕、中日字幕、繁日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219193314975.jpg)
+
+#### 片名、译名
+小林さんちのメイドラゴン
+Miss Kobayashi's Dragon Maid
+小林家的妹抖龙
+小林家的女僕龍、小林家的妹抖龍
+
+#### 来源说明
+中文字幕（含时间轴）来源：[https://bbs.acgrip.com/thread-2465-1-1.html](https://bbs.acgrip.com/thread-2465-1-1.html)
+
+#### 下载地址（Download link，ダウンロードリンク）
+[Lanzou](https://www.lanzoub.com/b0r9b2d7a)，password: g4d8
+[Baidu](https://pan.baidu.com/s/14hZlWKJdfTYCNQZ9ulJ0HQ?pwd=inx8)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E5%B0%8F%E6%9E%97%E5%AE%B6%E7%9A%84%E9%BE%99%E5%A5%B3%E4%BB%86S1.zip)
+[bilibili](https://www.bilibili.com/opus/942882210933899283)
+
+#### 播放效果
+###### 日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218203557961.jpg)
+###### 简日
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218203606435.jpg)`,
   },
   {
     slug: "2024/05/21/jpsub/The_Legendary_Hero_Is_Dead",
@@ -275,7 +638,37 @@ CLANNAD 〜AFTER STORY〜
     tags: ["中日双语字幕"],
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219193414501.webp",
     hidden: false,
-    content: ``,
+    content: `アニメ「勇者が死んだ！」日本語字幕、バイリンガル字幕、簡体字+日本語字幕、中日字幕
+The animation "The Legendary Hero Is Dead!" Japanese subtitles, bilingual subtitles, Simplified Chinese + Japanese subtitles, Chinese-Japanese subtitles.
+
+<!-- more -->
+
+## 动画「勇者死了」日文字幕双语字幕简日字幕中日字幕
+
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241219193414501.webp)
+
+#### 片名、译名
+勇者が死んだ！村人の俺が掘った落とし穴に勇者が落ちた結果。
+The Legendary Hero Is Dead!
+勇者死了！因为勇者掉进我这个村民挖的陷阱里。
+勇者死了！因為勇者掉進我這個村民挖的陷阱裡。
+
+#### 来源说明
+本字幕基于喵萌奶茶屋的简体中文字幕制作，SRT格式。本字幕仅供学习交流使用，请于下载后24小时删除。
+
+#### 下载地址（Download here、ダウンロードリンク）
+[蓝奏云](https://www.lanzoub.com/b0r98mezg)，密码：2ztw
+[百度云](https://pan.baidu.com/s/1ITR7te3y6nmzVit4VG6jNA?pwd=xw2m)
+[Github](https://github.com/lwtdzh/imghost/blob/master/subs/%E5%8B%87%E8%80%85%E6%AD%BB%E4%BA%86.zip)
+[acgrip](https://bbs.acgrip.com/thread-12355-1-1.html)
+[bilibili](https://www.bilibili.com/opus/933959205714395219)
+
+#### 播放效果展示
+###### 双语
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218105341224.jpg)
+
+###### 仅日文
+![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241218105345120.jpg)`,
   },
   {
     slug: "2022/09/07/test/Image-Host-Test",
@@ -287,23 +680,19 @@ CLANNAD 〜AFTER STORY〜
     cover: "https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241216175657162.png",
     hidden: false,
     content: `## 文章说明
-
 本文章用于检查博客的图床是否正常加载。如果下方标题下的图片能正常显示，则说明对应图床正常工作。
 
 ## 直连 Github 图床
-
 部分地区可能无法直连 Github。  
 
 ![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241216175657162.png)
 
 ## 直连 Cloudflare Workers
-
 可能无法连接，因 Cloudflare Workers 域名被屏蔽。  
 
 ![](https://reverse-proxy-raw-githubusercontent-com.lwtdzh.workers.dev/lwtdzh/imghost/master/img/20241216175657162.png)
 
 ## 使用自定义域连接 Cloudflare Workers
-
 理论上可以正常显示。  
 
 ![](https://raw.githubusercontent.com/lwtdzh/imghost/master/img/20241216175657162.png)`,
@@ -327,7 +716,7 @@ Welcome to [Hexo](https://hexo.io/)! This is your very first post. Check [docume
 
 ### Create a new post
 
-\`\`\`bash
+\`\`\` bash
 \$ hexo new "My New Post"
 \`\`\`
 
@@ -335,7 +724,7 @@ More info: [Writing](https://hexo.io/docs/writing.html)
 
 ### Run server
 
-\`\`\`bash
+\`\`\` bash
 \$ hexo server
 \`\`\`
 
@@ -343,7 +732,7 @@ More info: [Server](https://hexo.io/docs/server.html)
 
 ### Generate static files
 
-\`\`\`bash
+\`\`\` bash
 \$ hexo generate
 \`\`\`
 
@@ -351,7 +740,7 @@ More info: [Generating](https://hexo.io/docs/generating.html)
 
 ### Deploy to remote sites
 
-\`\`\`bash
+\`\`\` bash
 \$ hexo deploy
 \`\`\`
 
