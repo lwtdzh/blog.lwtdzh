@@ -5,7 +5,7 @@ export default defineConfig({
   timeout: 60000,
   retries: 2,
   use: {
-    baseURL: process.env.BASE_URL || 'https://blog.lwtdzh.ip-ddns.com',
+    baseURL: process.env.BASE_URL || 'https://bangdream.pages.dev',
     headless: true,
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',

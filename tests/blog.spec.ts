@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 
-// Set BASE_URL env var to override, e.g.: BASE_URL=https://blog-lwtdzh.pages.dev npx playwright test
-const BASE = process.env.BASE_URL || 'https://blog.lwtdzh.ip-ddns.com';
+// Set BASE_URL env var to override the default
+const BASE = process.env.BASE_URL || 'https://bangdream.pages.dev';
 
 // Helper: navigate with retry logic for transient connection resets
 async function go(page: Page, path: string, maxRetries = 3) {

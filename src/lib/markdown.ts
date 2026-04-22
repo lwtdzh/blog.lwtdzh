@@ -10,7 +10,8 @@ marked.setOptions({
 const renderer = new marked.Renderer();
 
 // External links open in new tab
-renderer.link = function ({ href, title, text }) {
+// marked v12 uses positional args: (href, title, text)
+renderer.link = function (href: string, title: string | null, text: string) {
   const isExternal = href && (href.startsWith('http://') || href.startsWith('https://'));
   const titleAttr = title ? ` title="${title}"` : '';
   if (isExternal) {
@@ -20,7 +21,8 @@ renderer.link = function ({ href, title, text }) {
 };
 
 // Images with lazy loading
-renderer.image = function ({ href, title, text }) {
+// marked v12 uses positional args: (href, title, text)
+renderer.image = function (href: string, title: string | null, text: string) {
   const titleAttr = title ? ` title="${title}"` : '';
   const altAttr = text ? ` alt="${text}"` : '';
   return `<img src="${href}"${altAttr}${titleAttr} loading="lazy">`;
