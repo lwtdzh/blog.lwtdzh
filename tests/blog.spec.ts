@@ -722,14 +722,11 @@ test.describe('Admin', () => {
   test('admin dashboard lists all articles including the hidden one', async ({ page }) => {
     await loginToAdmin(page);
 
-    const rows = page.locator('table tbody tr');
+    const articleCard = page.locator('.card').filter({ hasText: `Articles (${TOTAL_ARTICLES})` }).first();
+    const rows = articleCard.locator('table tbody tr');
     await expect(rows).toHaveCount(TOTAL_ARTICLES);
-    await expect(page.locator('tbody tr').filter({ hasText: HIDDEN_ARTICLE.title })).toContainText(
-      'Hidden',
-    );
-    await expect(page.locator('tbody tr').filter({ hasText: COMMENT_ARTICLE.title })).toContainText(
-      'Visible',
-    );
+    await expect(articleCard.locator('tbody tr').filter({ hasText: HIDDEN_ARTICLE.title })).toContainText('Hidden');
+    await expect(articleCard.locator('tbody tr').filter({ hasText: COMMENT_ARTICLE.title })).toContainText('Visible');
   });
 
   test('admin can delete a comment when comment moderation UI is available', async ({
