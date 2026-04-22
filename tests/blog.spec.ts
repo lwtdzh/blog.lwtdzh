@@ -1044,7 +1044,10 @@ test.describe('Admin article CRUD', () => {
       await expect(page).toHaveURL(/\/admin\/articles\/edit\?/);
       await expect(page.locator('.notice-box')).toContainText('Article created');
 
-      sourcePath = await page.locator('input[name="sourcePath"]').inputValue();
+      sourcePath = await page
+        .getByTestId('article-editor-form')
+        .locator('input[name="sourcePath"]')
+        .inputValue();
       expect(sourcePath).toMatch(/^content\/posts\/.+\.md$/);
 
       await go(page, '/admin/dashboard');
