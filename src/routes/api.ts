@@ -12,6 +12,7 @@ type CommentRow = {
   content: string;
   created_at: string;
   commenter_type?: string;
+  ip_address?: string;
   country?: string;
   region?: string;
   city?: string;
@@ -191,7 +192,7 @@ api.get('/comments', async (c) => {
 
   try {
     const { results } = await db.prepare(
-      'SELECT id, slug, content, created_at, commenter_type, country, region, city FROM comments WHERE slug = ? ORDER BY datetime(created_at) DESC, id DESC'
+      'SELECT id, slug, content, created_at, commenter_type, ip_address, country, region, city FROM comments WHERE slug = ? ORDER BY datetime(created_at) DESC, id DESC'
     ).bind(slug).all<CommentRow>();
 
     const publicComments = (results || []).map((comment) => ({
@@ -201,6 +202,8 @@ api.get('/comments', async (c) => {
       commenter_type: comment.commenter_type || 'visitor',
       content: comment.content,
       created_at: comment.created_at,
+      ip_address: comment.ip_address?.trim() || undefined,
+      location: buildLocationLabel(comment.city, comment.region, comment.country) || undefined,
     }));
 
     return c.json(publicComments, 200, CORS_HEADERS);

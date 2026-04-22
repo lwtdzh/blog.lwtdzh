@@ -87,7 +87,10 @@
   function renderComment(comment) {
     const author = comment.author || 'Visitor';
     const locationHtml = comment.location
-      ? '<span class="comment-location">' + escapeHtml(comment.location) + '</span>'
+      ? '<span class="comment-location" data-testid="comment-location">' + escapeHtml(comment.location) + '</span>'
+      : '';
+    const ipHtml = comment.ip_address
+      ? '<span class="comment-ip" data-testid="comment-ip">IP: ' + escapeHtml(comment.ip_address) + '</span>'
       : '';
     const avatarUrl = getAvatarUrl(author + ':' + (comment.location || ''));
 
@@ -98,6 +101,7 @@
       '    <div class="comment-meta">',
       '      <strong class="comment-author">' + escapeHtml(author) + '</strong>',
       locationHtml,
+      ipHtml,
       '      <span class="comment-time">' + escapeHtml(formatRelativeTime(comment.created_at)) + '</span>',
       '    </div>',
       '    <div class="comment-content">' + escapeHtml(comment.content) + '</div>',

@@ -2758,6 +2758,17 @@ body {
   padding: 2px 8px;
 }
 
+.comment-ip {
+  color: #516072;
+  font-size: 0.78em;
+  background: #eef3f7;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .comment-time {
   color: #aaa;
   font-size: 0.82em;
@@ -2781,6 +2792,17 @@ body {
   text-align: center;
   color: #e74c3c;
   padding: 20px 0;
+}
+
+@media (max-width: 640px) {
+  .comment-meta {
+    gap: 8px;
+  }
+
+  .comment-location,
+  .comment-ip {
+    max-width: 100%;
+  }
 }
 
 /* --- Comment Form --- */

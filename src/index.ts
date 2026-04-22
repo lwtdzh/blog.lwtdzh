@@ -9,6 +9,7 @@ import { initDB } from './lib/articles';
 type Bindings = {
   DB: D1Database;
   ADMIN_PWD: string;
+  GITHUB_TOKEN?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();

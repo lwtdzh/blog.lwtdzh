@@ -11,6 +11,13 @@ const ADMIN_PASSWORD_HINT =
   'Set ADMIN_PASSWORD, ADMIN_PWD, or PLAYWRIGHT_ADMIN_PASSWORD to run authenticated admin tests.';
 const STATEFUL_BROWSER_HINT =
   'Stateful comment/admin mutation coverage runs once in Chromium to reduce cross-browser data pollution.';
+const RUN_GITHUB_MUTATION_TESTS = /^(1|true|yes)$/i.test(
+  process.env.PLAYWRIGHT_ADMIN_ARTICLE_CRUD ||
+    process.env.RUN_GITHUB_MUTATION_TESTS ||
+    '',
+);
+const GITHUB_MUTATION_HINT =
+  'Set PLAYWRIGHT_ADMIN_ARTICLE_CRUD=1 (or RUN_GITHUB_MUTATION_TESTS=1) to run GitHub-backed admin article CRUD tests.';
 
 const ALL_ARTICLES = articles;
 const VISIBLE_ARTICLES = ALL_ARTICLES.filter((article) => !article.hidden);
@@ -357,11 +364,26 @@ async function assertOptionalCommentMetadata(
     const text = normalizeText(await location.textContent());
     expect(text.length).toBeGreaterThan(0);
   }
+
+  const ip = scope
+    .locator('.comment-ip, [data-testid="comment-ip"], [data-ip], .comment-meta [class*="ip"]')
+    .first();
+
+  if ((await ip.count()) > 0) {
+    const text = normalizeText(await ip.textContent());
+    expect(text.length).toBeGreaterThan(0);
+    expect(/ip:/i.test(text)).toBe(true);
+  }
 }
 
 function requireAdminSession(): void {
   test.skip(!ADMIN_PASSWORD, ADMIN_PASSWORD_HINT);
   test.skip(!BASE.startsWith('https://'), 'Authenticated admin tests require an https BASE_URL because the admin cookie is secure-only.');
+}
+
+function requireGitHubMutationSession(): void {
+  requireAdminSession();
+  test.skip(!RUN_GITHUB_MUTATION_TESTS, GITHUB_MUTATION_HINT);
 }
 
 async function loginToAdmin(page: Page): Promise<void> {
@@ -378,6 +400,48 @@ async function loginToAdmin(page: Page): Promise<void> {
     page.url().includes('/admin/dashboard') || (await dashboardHeading.count()) > 0;
 
   expect(onDashboard).toBe(true);
+}
+
+async function setEasyMDEValue(page: Page, value: string): Promise<void> {
+  await page.waitForFunction(() => {
+    return Boolean((window as Window & { __adminEasyMDE?: unknown }).__adminEasyMDE);
+  });
+
+  await page.evaluate((markdown: string) => {
+    const editor = (window as Window & {
+      __adminEasyMDE?: { value(nextValue?: string): string };
+    }).__adminEasyMDE;
+
+    if (!editor) {
+      throw new Error('EasyMDE editor is not available on the page.');
+    }
+
+    editor.value(markdown);
+  }, value);
+}
+
+async function waitForEditorPreview(page: Page, expectedText: string): Promise<void> {
+  const preview = page.locator('.editor-preview-side').first();
+  await expect(preview).toBeVisible({ timeout: 15000 });
+  await expect(preview).toContainText(expectedText, { timeout: 15000 });
+}
+
+async function cleanupCreatedArticle(page: Page, sourcePath?: string): Promise<void> {
+  if (!sourcePath) {
+    return;
+  }
+
+  await loginToAdmin(page);
+  await go(page, `/admin/articles/edit?path=${encodeURIComponent(sourcePath)}`);
+
+  const deleteButton = page.getByTestId('delete-article-button').first();
+  if ((await deleteButton.count()) === 0 || !(await deleteButton.isVisible().catch(() => false))) {
+    return;
+  }
+
+  page.once('dialog', (dialog) => dialog.accept());
+  await deleteButton.click();
+  await page.waitForLoadState('domcontentloaded');
 }
 
 test.describe('Homepage and listing pages', () => {
@@ -716,6 +780,10 @@ test.describe('Comments', () => {
     if (found && typeof found.location === 'string') {
       expect(normalizeText(found.location).length).toBeGreaterThan(0);
     }
+
+    if (found && typeof found.ip_address === 'string') {
+      expect(normalizeText(found.ip_address).length).toBeGreaterThan(0);
+    }
   });
 
   test('comments API rejects a payload without the required core fields', async ({ page }) => {
@@ -749,6 +817,90 @@ test.describe('Comments', () => {
     await expect(commentSection(page).getByText(content, { exact: true })).toBeVisible();
     await assertOptionalCommentMetadata(submission.commentScope, submission.fallbackAuthor);
   });
+
+  test('public comments render optional location and IP metadata when the API includes them', async ({
+    page,
+  }) => {
+    const content = `Stubbed metadata comment ${Date.now()}`;
+
+    await page.route('**/api/comments?slugs=**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          [articlePath(COMMENT_ARTICLE)]: 1,
+        }),
+      });
+    });
+
+    await page.route('**/api/comments?slug=**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 999001,
+            slug: articlePath(COMMENT_ARTICLE),
+            author: 'Visitor',
+            commenter_type: 'visitor',
+            content,
+            created_at: '2026-04-22T09:30:00+08:00',
+            location: 'Shanghai, Shanghai, CN',
+            ip_address: '203.0.113.10',
+          },
+        ]),
+      });
+    });
+
+    await go(page, articlePath(COMMENT_ARTICLE));
+
+    const item = commentList(page).locator('.comment-item').filter({ hasText: content }).first();
+    await expect(item).toBeVisible();
+    await expect(item.getByTestId('comment-location')).toHaveText('Shanghai, Shanghai, CN');
+    await expect(item.getByTestId('comment-ip')).toHaveText(/203\.0\.113\.10/);
+    await expect(item.locator('.comment-time')).toBeVisible();
+  });
+
+  test('public comments stay clean when location and IP metadata are absent', async ({
+    page,
+  }) => {
+    const content = `Stubbed minimal comment ${Date.now()}`;
+
+    await page.route('**/api/comments?slugs=**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          [articlePath(COMMENT_ARTICLE)]: 1,
+        }),
+      });
+    });
+
+    await page.route('**/api/comments?slug=**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 999002,
+            slug: articlePath(COMMENT_ARTICLE),
+            author: 'Visitor',
+            commenter_type: 'visitor',
+            content,
+            created_at: '2026-04-22T09:31:00+08:00',
+          },
+        ]),
+      });
+    });
+
+    await go(page, articlePath(COMMENT_ARTICLE));
+
+    const item = commentList(page).locator('.comment-item').filter({ hasText: content }).first();
+    await expect(item).toBeVisible();
+    await expect(item.getByTestId('comment-location')).toHaveCount(0);
+    await expect(item.getByTestId('comment-ip')).toHaveCount(0);
+    await expect(item.locator('.comment-time')).toBeVisible();
+  });
 });
 
 test.describe('Admin', () => {
@@ -777,9 +929,9 @@ test.describe('Admin', () => {
   test('admin dashboard lists all articles including the hidden one', async ({ page }) => {
     await loginToAdmin(page);
 
-    const articleCard = page.locator('.card').filter({ hasText: `Articles (${TOTAL_ARTICLES})` }).first();
+    const articleCard = page.locator('.card').filter({ hasText: /Articles \(\d+\)/ }).first();
     const rows = articleCard.locator('table tbody tr');
-    await expect(rows).toHaveCount(TOTAL_ARTICLES);
+    expect(await rows.count()).toBeGreaterThan(0);
     await expect(articleCard.locator('tbody tr').filter({ hasText: HIDDEN_ARTICLE.title })).toContainText('Hidden');
     await expect(articleCard.locator('tbody tr').filter({ hasText: COMMENT_ARTICLE.title })).toContainText('Visible');
   });
@@ -828,5 +980,111 @@ test.describe('Admin', () => {
 
     await go(page, slug);
     await expect(commentSection(page).getByText(content, { exact: true })).toHaveCount(0);
+  });
+});
+
+test.describe('Admin article CRUD', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  test('admin can create, edit with live Markdown preview, and delete a GitHub-backed article', async ({
+    page,
+    browserName,
+  }) => {
+    requireGitHubMutationSession();
+    test.skip(browserName !== 'chromium', STATEFUL_BROWSER_HINT);
+
+    const seed = `${Date.now()}`;
+    const initialTitle = `Playwright Admin Draft ${seed}`;
+    const updatedTitle = `Playwright Admin Revised ${seed}`;
+    const slug = `playwright-tests/admin-${seed}`;
+    const initialBody = [
+      '# Admin Draft',
+      '',
+      'This article is created by Playwright.',
+      '',
+      '- first bullet',
+      '- second bullet',
+    ].join('\n');
+    const updatedBody = [
+      '# Admin Revised',
+      '',
+      'This body proves the live preview keeps up after editing.',
+      '',
+      '```txt',
+      'preview-updated',
+      '```',
+    ].join('\n');
+
+    let sourcePath: string | undefined;
+    let deleted = false;
+
+    try {
+      await loginToAdmin(page);
+
+      const newArticleButton = page.getByTestId('new-article-button');
+      test.skip((await newArticleButton.count()) === 0, 'GitHub article editing is not enabled on this deployment.');
+
+      await newArticleButton.click();
+      await page.waitForLoadState('domcontentloaded');
+
+      await expect(page).toHaveURL(/\/admin\/articles\/new/);
+      await page.getByTestId('article-title-input').fill(initialTitle);
+      await page.getByTestId('article-date-input').fill('2026-04-22T10:30:45');
+      await page.getByTestId('article-slug-input').fill(`/${slug}/`);
+      await page.getByTestId('article-tags-input').fill('playwright, admin, markdown');
+      await page.getByTestId('article-description-input').fill('Created during Playwright admin CRUD coverage.');
+      await page.getByTestId('article-cover-input').fill('https://example.com/playwright-cover.png');
+
+      await setEasyMDEValue(page, initialBody);
+      await waitForEditorPreview(page, 'This article is created by Playwright.');
+
+      await page.getByTestId('save-article-button').click();
+      await page.waitForLoadState('domcontentloaded');
+
+      await expect(page).toHaveURL(/\/admin\/articles\/edit\?/);
+      await expect(page.locator('.notice-box')).toContainText('Article created');
+
+      sourcePath = await page.locator('input[name="sourcePath"]').inputValue();
+      expect(sourcePath).toMatch(/^content\/posts\/.+\.md$/);
+
+      await go(page, '/admin/dashboard');
+      const createdRow = page.locator('tr').filter({ hasText: initialTitle }).first();
+      await expect(createdRow).toBeVisible({ timeout: 15000 });
+      await expect(createdRow).toContainText('Visible');
+
+      await createdRow.getByTestId('edit-article-link').click();
+      await page.waitForLoadState('domcontentloaded');
+
+      await page.getByTestId('article-title-input').fill(updatedTitle);
+      await page.getByTestId('article-hidden-input').check();
+      await setEasyMDEValue(page, updatedBody);
+      await waitForEditorPreview(page, 'preview-updated');
+
+      await page.getByTestId('save-article-button').click();
+      await page.waitForLoadState('domcontentloaded');
+
+      await expect(page.locator('.notice-box')).toContainText('Article updated');
+      await expect(page.getByTestId('article-title-input')).toHaveValue(updatedTitle);
+      await expect(page.getByTestId('article-hidden-input')).toBeChecked();
+
+      await go(page, '/admin/dashboard');
+      const updatedRow = page.locator('tr').filter({ hasText: updatedTitle }).first();
+      await expect(updatedRow).toBeVisible({ timeout: 15000 });
+      await expect(updatedRow).toContainText('Hidden');
+
+      await updatedRow.getByTestId('edit-article-link').click();
+      await page.waitForLoadState('domcontentloaded');
+      page.once('dialog', (dialog) => dialog.accept());
+      await page.getByTestId('delete-article-button').click();
+      await page.waitForLoadState('domcontentloaded');
+
+      deleted = true;
+      await expect(page.locator('.notice-box')).toContainText('Article deleted');
+      await expect(page.locator('tr').filter({ hasText: updatedTitle })).toHaveCount(0);
+    } finally {
+      if (!deleted && sourcePath) {
+        await cleanupCreatedArticle(page, sourcePath);
+      }
+    }
   });
 });

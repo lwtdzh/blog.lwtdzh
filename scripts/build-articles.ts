@@ -7,52 +7,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-
-interface FrontMatter {
-  title: string;
-  date: string;
-  updated?: string;
-  slug: string;
-  tags: string[];
-  description?: string;
-  cover?: string;
-  hidden?: boolean;
-}
-
-function parseFrontMatter(fileContent: string): { data: FrontMatter; content: string } {
-  const match = fileContent.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-  if (!match) {
-    throw new Error('No front matter found');
-  }
-
-  const yamlStr = match[1];
-  const content = match[2].trim();
-
-  const data: any = {};
-  const lines = yamlStr.split('\n');
-
-  for (const line of lines) {
-    const colonIdx = line.indexOf(':');
-    if (colonIdx === -1) continue;
-
-    const key = line.substring(0, colonIdx).trim();
-    let value = line.substring(colonIdx + 1).trim();
-
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1);
-    }
-
-    if (key === 'tags') {
-      try { data.tags = JSON.parse(value); } catch { data.tags = []; }
-    } else if (key === 'hidden') {
-      data.hidden = value === 'true';
-    } else {
-      data[key] = value;
-    }
-  }
-
-  return { data: data as FrontMatter, content };
-}
+import { type ArticleFrontMatter, parseArticleFile } from '../src/lib/article-files';
 
 function escapeForTemplate(str: string): string {
   return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
@@ -68,13 +23,13 @@ function main() {
   }
 
   const files = fs.readdirSync(postsDir).filter(f => f.endsWith('.md'));
-  const articles: { data: FrontMatter; content: string; filename: string }[] = [];
+  const articles: { data: ArticleFrontMatter; content: string; filename: string }[] = [];
 
   for (const file of files) {
     const filePath = path.join(postsDir, file);
     const raw = fs.readFileSync(filePath, 'utf-8');
     try {
-      const { data, content } = parseFrontMatter(raw);
+      const { data, content } = parseArticleFile(raw);
       articles.push({ data, content, filename: file });
     } catch (e) {
       console.error(`ERROR processing ${file}: ${e}`);
