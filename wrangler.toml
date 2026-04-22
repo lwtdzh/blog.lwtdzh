@@ -1,12 +1,7 @@
-# NOTE: pages_build_output_dir is intentionally omitted so that the
-# Cloudflare dashboard build config (build_command, destination_dir) is used
-# instead of wrangler.toml becoming the source of truth.
-# This allows the dashboard build_command "npm install" to run before
-# Functions are bundled, ensuring hono/marked dependencies are available.
 name = "blog-lwtdzh"
 compatibility_date = "2024-01-01"
+pages_build_output_dir = "public"
 
-# For local dev only: wrangler pages dev public --d1 DB=blog-lwtdzh
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-lwtdzh"
