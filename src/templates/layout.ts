@@ -146,6 +146,10 @@ export function renderLayout(options: LayoutOptions): string {
     <footer class="footer">
       <div class="footer-inner">
         <div class="copyright">Powered by Cloudflare and 一只牛马的精湛技艺</div>
+        <div id="link-exchange">
+          <h3 class="link-exchange-title"><i class="fa fa-link"></i> Friend Links</h3>
+          <div class="link-exchange-content"></div>
+        </div>
       </div>
     </footer>
   </div>
@@ -154,6 +158,7 @@ export function renderLayout(options: LayoutOptions): string {
   <script src="/js/next-boot.js"></script>
   <script src="/js/visitors.js"></script>
   <script src="/js/comments.js"></script>
+  <script src="/js/link-exchange.js"></script>
 </body>
 </html>`;
 }

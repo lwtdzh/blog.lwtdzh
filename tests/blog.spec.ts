@@ -580,6 +580,61 @@ test.describe('Visitors, SEO, and static assets', () => {
     expect(ogType).toBe('website');
   });
 
+  test('homepage restores the friend links footer and keeps the title after loading cards', async ({
+    page,
+  }) => {
+    await page.route(
+      'https://raw.githubusercontent.com/lwtdzh/link-exchange/refs/heads/main/links',
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/plain',
+          body: [
+            'Example Friend https://example.com',
+            'Another Friend https://another.example.com',
+          ].join('\n'),
+        });
+      },
+    );
+
+    await go(page, '/');
+
+    const linkExchange = page.locator('#link-exchange');
+    await expect(linkExchange).toBeVisible();
+    await expect(page.locator('script[src="/js/link-exchange.js"]')).toHaveCount(1);
+    await expect(linkExchange.locator('.link-exchange-title')).toHaveText(/Friend Links/);
+    await expect(linkExchange.locator('.link-exchange-content .link-exchange-card')).toHaveCount(2);
+    await expect(
+      linkExchange.locator('.link-exchange-content .link-exchange-description').first(),
+    ).toHaveText('Example Friend');
+    await expect(linkExchange.locator('.link-exchange-title')).toBeVisible();
+  });
+
+  test('homepage shows a friend links fallback without losing the title when loading fails', async ({
+    page,
+  }) => {
+    await page.route(
+      'https://raw.githubusercontent.com/lwtdzh/link-exchange/refs/heads/main/links',
+      async (route) => {
+        await route.fulfill({
+          status: 500,
+          contentType: 'text/plain',
+          body: 'upstream failure',
+        });
+      },
+    );
+
+    await go(page, '/');
+
+    const linkExchange = page.locator('#link-exchange');
+    await expect(linkExchange).toBeVisible();
+    await expect(linkExchange.locator('.link-exchange-title')).toHaveText(/Friend Links/);
+    await expect(linkExchange.locator('.link-exchange-error')).toHaveText(
+      /Failed to load links/i,
+    );
+    await expect(linkExchange.locator('.link-exchange-title')).toBeVisible();
+  });
+
   test('article pages expose article SEO metadata', async ({ page }) => {
     await go(page, articlePath(CLANNAD_ARTICLE));
 

@@ -41,6 +41,7 @@
   async function loadLinks() {
     const container = document.getElementById('link-exchange');
     if (!container) return;
+    const content = container.querySelector('.link-exchange-content') || container;
 
     try {
       const response = await fetch('https://raw.githubusercontent.com/lwtdzh/link-exchange/refs/heads/main/links');
@@ -56,16 +57,16 @@
       });
 
       if (links.length === 0) {
-        container.innerHTML = '<p class="link-exchange-empty">No links available.</p>';
+        content.innerHTML = '<p class="link-exchange-empty">No links available.</p>';
         return;
       }
 
-      container.innerHTML = '<div class="link-exchange-grid">' + 
+      content.innerHTML = '<div class="link-exchange-grid">' + 
         links.map(renderLinkCard).join('') + 
         '</div>';
     } catch (error) {
       console.error('Error loading links:', error);
-      container.innerHTML = '<p class="link-exchange-error">Failed to load links. Please try again later.</p>';
+      content.innerHTML = '<p class="link-exchange-error">Failed to load links. Please try again later.</p>';
     }
   }
 
