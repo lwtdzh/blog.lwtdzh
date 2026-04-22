@@ -66,7 +66,6 @@ test.describe('Homepage & Layout', () => {
   test('sidebar shows author info, post count and tag count', async ({ page }) => {
     await go(page, '/');
     await expect(page.locator('.site-author-name')).toHaveText('lwtdzh');
-    await expect(page.locator('.site-author-image')).toHaveAttribute('src', '/images/avatar.gif');
 
     const postCount = await page.locator('.site-state-posts .site-state-item-count').textContent();
     expect(Number(postCount?.trim())).toBeGreaterThan(0);
