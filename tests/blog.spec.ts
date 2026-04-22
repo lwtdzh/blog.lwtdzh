@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 
-// Set BASE_URL env var to override the default
-const BASE = process.env.BASE_URL || 'https://bangdream.pages.dev';
+// Set BASE_URL env var to override, e.g.: BASE_URL=https://blog-lwtdzh.pages.dev npx playwright test
+const BASE = process.env.BASE_URL || 'https://blog.lwtdzh.ip-ddns.com';
 
 // Helper: navigate with retry logic for transient connection resets
 async function go(page: Page, path: string, maxRetries = 3) {
@@ -66,6 +66,7 @@ test.describe('Homepage & Layout', () => {
   test('sidebar shows author info, post count and tag count', async ({ page }) => {
     await go(page, '/');
     await expect(page.locator('.site-author-name')).toHaveText('lwtdzh');
+    await expect(page.locator('.site-author-image')).toHaveAttribute('src', '/images/avatar.gif');
 
     const postCount = await page.locator('.site-state-posts .site-state-item-count').textContent();
     expect(Number(postCount?.trim())).toBeGreaterThan(0);
@@ -77,9 +78,7 @@ test.describe('Homepage & Layout', () => {
   test('footer is present', async ({ page }) => {
     await go(page, '/');
     await expect(page.locator('footer.footer')).toBeVisible();
-    // Footer may contain "Cloudflare" in .powered-by or .copyright depending on template version
-    const footer = page.locator('.footer-inner');
-    await expect(footer).toContainText('lwtdzh');
+    await expect(page.locator('.copyright')).toContainText('Cloudflare');
   });
 
   test('homepage lists article cards with titles and dates', async ({ page }) => {
@@ -178,7 +177,7 @@ test.describe('Article Page', () => {
 test.describe('Archives Page', () => {
   test('archives page loads and shows article count', async ({ page }) => {
     await go(page, '/archives/');
-    await expect(page).toHaveTitle(/Archiv(e|es)/);
+    await expect(page).toHaveTitle(/Archives/);
     const header = page.locator('.collection-title .collection-header');
     const text = await header.textContent();
     expect(text).toContain('posts in total');
@@ -510,17 +509,7 @@ test.describe('Navigation & Routing', () => {
 
   test('404 for non-existent article', async ({ page }) => {
     const res = await page.goto('/9999/99/99/nonexistent/slug/', { waitUntil: 'domcontentloaded' });
-    // On Cloudflare Pages, unmatched routes may return 200 (homepage) or 404 depending on routing config
-    // Accept either: a proper 404 status, or a 200 that shows the homepage (no article content)
-    const status = res?.status() ?? 0;
-    if (status === 404) {
-      // Proper 404 response
-      expect(status).toBe(404);
-    } else {
-      // Falls through to homepage — verify it's NOT showing the non-existent article
-      const title = await page.title();
-      expect(title).not.toContain('nonexistent');
-    }
+    expect(res?.status()).toBe(404);
   });
 });
 
