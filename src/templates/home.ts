@@ -33,13 +33,13 @@ export function renderHomePage(articles: ArticleMeta[], excerpts: Map<string, st
       <span id="/${slug}/" class="post-meta-item leancloud_visitors" data-flag-title="${article.title}" title="Views">
         <span class="post-meta-item-icon"><i class="fa fa-eye"></i></span>
         <span class="post-meta-item-text">Views: </span>
-        <span class="leancloud-visitors-count"></span>
+        <span class="leancloud-visitors-count visitor-count"></span>
       </span>
       <span class="post-meta-item">
         <span class="post-meta-item-icon"><i class="far fa-comment"></i></span>
         <span class="post-meta-item-text">Comments: </span>
         <a title="valine" href="/${slug}/#comments-section" itemprop="discussionUrl">
-          <span class="post-comments-count valine-comment-count" data-xid="/${slug}/" itemprop="commentCount"></span>
+          <span class="post-comments-count comment-count valine-comment-count" data-xid="/${slug}/" itemprop="commentCount"></span>
         </a>
       </span>
     </div>

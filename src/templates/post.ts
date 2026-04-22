@@ -58,13 +58,13 @@ export function renderPostPage(
         <span id="/${slug}/" class="post-meta-item leancloud_visitors" data-flag-title="${article.title}" title="Views">
           <span class="post-meta-item-icon"><i class="fa fa-eye"></i></span>
           <span class="post-meta-item-text">Views: </span>
-          <span class="leancloud-visitors-count"></span>
+          <span class="leancloud-visitors-count visitor-count"></span>
         </span>
         <span class="post-meta-item">
           <span class="post-meta-item-icon"><i class="far fa-comment"></i></span>
           <span class="post-meta-item-text">Comments: </span>
           <a title="valine" href="/${slug}/#comments-section" itemprop="discussionUrl">
-            <span class="post-comments-count valine-comment-count" data-xid="/${slug}/" itemprop="commentCount"></span>
+            <span class="post-comments-count comment-count valine-comment-count" data-xid="/${slug}/" itemprop="commentCount"></span>
           </a>
         </span>
       </div>
@@ -84,12 +84,13 @@ export function renderPostPage(
   </article>
 
   <div class="comments" id="comments-section">
+    <h2 class="comment-title">
+      <i class="far fa-comment-dots"></i>
+      Comments
+    </h2>
+    <p class="comment-note">Comments are posted anonymously. IP address and approximate location are recorded for moderation.</p>
     <div class="comment-form-container">
       <form class="comment-form">
-        <div class="comment-form-row">
-          <input class="comment-input" name="nickname" placeholder="Nickname *" required>
-          <input class="comment-input" name="email" placeholder="Email (for Gravatar)" type="email">
-        </div>
         <textarea class="comment-textarea" name="content" placeholder="Write a comment..." required></textarea>
         <button class="comment-submit" type="submit">Submit</button>
       </form>

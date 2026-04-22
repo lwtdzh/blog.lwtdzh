@@ -150,6 +150,7 @@ export function renderLayout(options: LayoutOptions): string {
     </footer>
   </div>
   <script src="/js/utils.js"></script>
+  <script src="/lib/anime.min.js"></script>
   <script src="/js/next-boot.js"></script>
   <script src="/js/visitors.js"></script>
   <script src="/js/comments.js"></script>

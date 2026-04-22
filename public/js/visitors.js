@@ -32,10 +32,10 @@
       const count = data[slug] || 0;
 
       // Update display
-      const countElement = document.querySelector('.visitor-count');
-      if (countElement) {
+      const countElements = document.querySelectorAll('.leancloud_visitors .leancloud-visitors-count, .leancloud_visitors .visitor-count');
+      countElements.forEach(function(countElement) {
         countElement.textContent = formatNumber(count);
-      }
+      });
     } catch (error) {
       console.error('Error updating visitor count:', error);
     }

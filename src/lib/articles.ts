@@ -37,16 +37,44 @@ export async function initDB(db: D1Database): Promise<void> {
     )
   `).run();
 
+  await db.prepare('CREATE INDEX IF NOT EXISTS idx_visitors_slug ON visitors (slug)').run();
+
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS comments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       slug TEXT NOT NULL,
       nickname TEXT NOT NULL,
       email TEXT DEFAULT '',
+      commenter_type TEXT DEFAULT 'visitor',
+      ip_address TEXT DEFAULT '',
+      country TEXT DEFAULT '',
+      region TEXT DEFAULT '',
+      city TEXT DEFAULT '',
       content TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  const schema = await db.prepare('PRAGMA table_info(comments)').all<{ name: string }>();
+  const columns = new Set((schema.results || []).map((column: any) => String(column.name)));
+
+  const commentMigrations: Array<[string, string]> = [
+    ['commenter_type', "ALTER TABLE comments ADD COLUMN commenter_type TEXT DEFAULT 'visitor'"],
+    ['ip_address', "ALTER TABLE comments ADD COLUMN ip_address TEXT DEFAULT ''"],
+    ['country', "ALTER TABLE comments ADD COLUMN country TEXT DEFAULT ''"],
+    ['region', "ALTER TABLE comments ADD COLUMN region TEXT DEFAULT ''"],
+    ['city', "ALTER TABLE comments ADD COLUMN city TEXT DEFAULT ''"],
+  ];
+
+  for (const [column, statement] of commentMigrations) {
+    if (!columns.has(column)) {
+      await db.prepare(statement).run();
+    }
+  }
+
+  await db.prepare(
+    'CREATE INDEX IF NOT EXISTS idx_comments_slug_created_at ON comments (slug, created_at DESC, id DESC)'
+  ).run();
 }
 
 // Get all visible articles (sorted by date desc — already sorted in generated file)

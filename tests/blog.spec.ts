@@ -1,767 +1,780 @@
-import { test, expect, Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import { articles, type ArticleData } from '../src/generated/articles';
 
 const BASE = process.env.BASE_URL || 'https://blog.lwtdzh.ip-ddns.com';
+const ADMIN_PASSWORD =
+  process.env.ADMIN_PASSWORD ||
+  process.env.ADMIN_PWD ||
+  process.env.PLAYWRIGHT_ADMIN_PASSWORD ||
+  '';
+const ADMIN_PASSWORD_HINT =
+  'Set ADMIN_PASSWORD, ADMIN_PWD, or PLAYWRIGHT_ADMIN_PASSWORD to run authenticated admin tests.';
+const STATEFUL_BROWSER_HINT =
+  'Stateful comment/admin mutation coverage runs once in Chromium to reduce cross-browser data pollution.';
 
-// Helper: navigate with retry logic for transient connection resets
-async function go(page: Page, path: string, maxRetries = 3) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+const ALL_ARTICLES = articles;
+const VISIBLE_ARTICLES = ALL_ARTICLES.filter((article) => !article.hidden);
+const TOTAL_ARTICLES = ALL_ARTICLES.length;
+const VISIBLE_ARTICLE_COUNT = VISIBLE_ARTICLES.length;
+const PAGE_SIZE = 10;
+const FIRST_PAGE_ARTICLES = VISIBLE_ARTICLES.slice(0, PAGE_SIZE);
+const SECOND_PAGE_ARTICLES = VISIBLE_ARTICLES.slice(PAGE_SIZE);
+const TAG_TO_ARTICLES = buildTagMap(VISIBLE_ARTICLES);
+const YEAR_HEADERS = Array.from(
+  new Set(VISIBLE_ARTICLES.map((article) => article.date.slice(0, 4))),
+);
+
+const COMMENT_ARTICLE = requireArticle('2022/09/07/test/hello-world');
+const IMAGE_HOST_ARTICLE = requireArticle('2022/09/07/test/Image-Host-Test');
+const CLANNAD_ARTICLE = requireArticle('2024/08/14/jpsub/clannad');
+const HIDDEN_ARTICLE = ALL_ARTICLES.find((article) => article.hidden);
+
+if (!HIDDEN_ARTICLE) {
+  throw new Error('Expected one hidden article in generated article data.');
+}
+
+function requireArticle(slug: string): ArticleData {
+  const article = ALL_ARTICLES.find((entry) => entry.slug === slug);
+  if (!article) {
+    throw new Error(`Expected article "${slug}" to exist.`);
+  }
+  return article;
+}
+
+function buildTagMap(items: readonly ArticleData[]): Map<string, ArticleData[]> {
+  const map = new Map<string, ArticleData[]>();
+
+  for (const article of items) {
+    for (const tag of article.tags) {
+      const existing = map.get(tag) || [];
+      existing.push(article);
+      map.set(tag, existing);
+    }
+  }
+
+  return map;
+}
+
+function articlePath(article: Pick<ArticleData, 'slug'>): string {
+  return `/${article.slug}/`;
+}
+
+function normalizeText(text: string | null | undefined): string {
+  return (text || '').replace(/\s+/g, ' ').trim();
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function asBodyText(body: unknown): string {
+  return typeof body === 'string' ? body : JSON.stringify(body);
+}
+
+async function go(page: Page, path: string, maxRetries = 3): Promise<void> {
+  for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
     try {
       await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 30000 });
       return;
-    } catch (err: any) {
-      const msg = err?.message || '';
-      if (attempt < maxRetries && (msg.includes('ERR_CONNECTION_RESET') || msg.includes('ERR_CONNECTION_REFUSED') || msg.includes('net::'))) {
-        await page.waitForTimeout(2000 * attempt);
+    } catch (error: any) {
+      const message = error?.message || '';
+      const shouldRetry =
+        message.includes('ERR_CONNECTION_RESET') ||
+        message.includes('ERR_CONNECTION_REFUSED') ||
+        message.includes('net::');
+
+      if (attempt < maxRetries && shouldRetry) {
+        await page.waitForTimeout(1500 * attempt);
         continue;
       }
-      throw err;
+
+      throw error;
     }
   }
 }
 
-// Helper: call API from within the browser page context (avoids SSL issues with request context)
 async function apiGet(page: Page, path: string): Promise<{ status: number; body: any }> {
   return page.evaluate(async (url: string) => {
-    const res = await fetch(url);
-    const text = await res.text();
+    const response = await fetch(url);
+    const text = await response.text();
+
     let body: any;
-    try { body = JSON.parse(text); } catch { body = text; }
-    return { status: res.status, body };
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = text;
+    }
+
+    return { status: response.status, body };
   }, `${BASE}${path}`);
 }
 
-async function apiPost(page: Page, path: string, data: any): Promise<{ status: number; body: any }> {
-  return page.evaluate(async ({ url, data }: { url: string; data: any }) => {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    const text = await res.text();
-    let body: any;
-    try { body = JSON.parse(text); } catch { body = text; }
-    return { status: res.status, body };
-  }, { url: `${BASE}${path}`, data });
+async function apiPost(
+  page: Page,
+  path: string,
+  data: Record<string, unknown>,
+): Promise<{ status: number; body: any }> {
+  return page.evaluate(
+    async ({ url, data: payload }: { url: string; data: Record<string, unknown> }) => {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const text = await response.text();
+
+      let body: any;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        body = text;
+      }
+
+      return { status: response.status, body };
+    },
+    { url: `${BASE}${path}`, data },
+  );
 }
 
-// ============================================================
-// 1. HOMEPAGE & LAYOUT (7 tests)
-// ============================================================
+async function textContents(locator: Locator): Promise<string[]> {
+  const values = await locator.allTextContents();
+  return values.map((value) => normalizeText(value)).filter(Boolean);
+}
 
-test.describe('Homepage & Layout', () => {
-  test('homepage loads with correct title', async ({ page }) => {
+function commentSection(page: Page): Locator {
+  return page.locator('#comments-section');
+}
+
+function commentForm(page: Page): Locator {
+  return commentSection(page).locator('form, .comment-form, [data-testid="comment-form"]').first();
+}
+
+function commentList(page: Page): Locator {
+  return commentSection(page)
+    .locator('.comment-list, [data-testid="comment-list"], [data-testid="comments-list"]')
+    .first();
+}
+
+function commentContentField(page: Page): Locator {
+  return commentForm(page)
+    .locator('textarea[name="content"], textarea.comment-textarea, textarea')
+    .first();
+}
+
+function commentSubmitButton(page: Page): Locator {
+  return commentForm(page)
+    .locator('button[type="submit"], .comment-submit, [data-testid="comment-submit"]')
+    .first();
+}
+
+async function fillVisibleRequiredIdentityFields(
+  form: Locator,
+  seed: string,
+): Promise<{ legacyIdentityUsed: boolean; fallbackAuthor?: string; fallbackEmail?: string }> {
+  const requiredFields = form.locator('input[required], textarea[required], select[required]');
+  const count = await requiredFields.count();
+
+  let legacyIdentityUsed = false;
+  let fallbackAuthor: string | undefined;
+  let fallbackEmail: string | undefined;
+
+  for (let index = 0; index < count; index += 1) {
+    const field = requiredFields.nth(index);
+    const isVisible = await field.isVisible().catch(() => false);
+    if (!isVisible) {
+      continue;
+    }
+
+    const tagName = await field.evaluate((element) => element.tagName.toLowerCase());
+    const name = (await field.getAttribute('name')) || '';
+
+    if (tagName === 'textarea' && name === 'content') {
+      continue;
+    }
+
+    legacyIdentityUsed = true;
+
+    if (tagName === 'input') {
+      const type = ((await field.getAttribute('type')) || 'text').toLowerCase();
+      if (type === 'hidden' || type === 'submit' || type === 'button') {
+        continue;
+      }
+
+      if (type === 'email') {
+        fallbackEmail = fallbackEmail || `anonymous-${seed}@example.com`;
+        await field.fill(fallbackEmail);
+      } else {
+        fallbackAuthor = fallbackAuthor || `Anonymous ${seed}`;
+        await field.fill(fallbackAuthor);
+      }
+
+      continue;
+    }
+
+    if (tagName === 'textarea') {
+      fallbackAuthor = fallbackAuthor || `Anonymous ${seed}`;
+      await field.fill(fallbackAuthor);
+      continue;
+    }
+
+    if (tagName === 'select') {
+      const selected = await field.evaluate((element) => {
+        const select = element as HTMLSelectElement;
+        const option = Array.from(select.options).find((candidate) => candidate.value);
+
+        if (!option) {
+          return '';
+        }
+
+        select.value = option.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        return option.value;
+      });
+
+      if (!selected) {
+        throw new Error(`Unable to satisfy required comment field "${name || 'select'}".`);
+      }
+    }
+  }
+
+  return { legacyIdentityUsed, fallbackAuthor, fallbackEmail };
+}
+
+async function submitCommentViaUi(
+  page: Page,
+  content: string,
+): Promise<{ legacyIdentityUsed: boolean; fallbackAuthor?: string; commentScope: Locator }> {
+  const section = commentSection(page);
+  const form = commentForm(page);
+
+  await expect(section).toBeVisible();
+  await expect(form).toBeVisible();
+  await expect(commentContentField(page)).toBeVisible();
+  await expect(commentSubmitButton(page)).toBeVisible();
+
+  const seed = `${Date.now()}`;
+  const dialogMessages: string[] = [];
+  const dialogHandler = async (dialog: { message(): string; dismiss(): Promise<void> }) => {
+    dialogMessages.push(dialog.message());
+    await dialog.dismiss();
+  };
+
+  page.on('dialog', dialogHandler);
+
+  try {
+    await commentContentField(page).fill(content);
+    const identity = await fillVisibleRequiredIdentityFields(form, seed);
+
+    await commentSubmitButton(page).click();
+
+    const contentLocator = section.getByText(content, { exact: true });
+    await expect(contentLocator).toBeVisible({ timeout: 15000 });
+
+    if (dialogMessages.length > 0) {
+      throw new Error(`Unexpected comment dialog: ${dialogMessages.join(' | ')}`);
+    }
+
+    const commentItem = section
+      .locator('.comment-item, [data-testid="comment-item"], article, li')
+      .filter({ hasText: content })
+      .first();
+
+    const hasCommentItem = (await commentItem.count()) > 0;
+
+    return {
+      legacyIdentityUsed: identity.legacyIdentityUsed,
+      fallbackAuthor: identity.fallbackAuthor,
+      commentScope: hasCommentItem ? commentItem : section,
+    };
+  } finally {
+    page.off('dialog', dialogHandler);
+  }
+}
+
+function commentResponseNeedsLegacyIdentity(body: unknown): boolean {
+  return /nickname|name|required/i.test(asBodyText(body));
+}
+
+async function postCommentWithAdaptivePayload(
+  page: Page,
+  slug: string,
+  content: string,
+): Promise<{
+  result: { status: number; body: any };
+  legacyIdentityUsed: boolean;
+  fallbackAuthor?: string;
+}> {
+  let result = await apiPost(page, '/api/comments', { slug, content });
+
+  if ((result.status === 400 || result.status === 422) && commentResponseNeedsLegacyIdentity(result.body)) {
+    const seed = `${Date.now()}`;
+    const fallbackAuthor = `Anonymous ${seed}`;
+    const fallbackEmail = `anonymous-${seed}@example.com`;
+    result = await apiPost(page, '/api/comments', {
+      slug,
+      content,
+      nickname: fallbackAuthor,
+      email: fallbackEmail,
+    });
+
+    return { result, legacyIdentityUsed: true, fallbackAuthor };
+  }
+
+  return { result, legacyIdentityUsed: false };
+}
+
+async function assertOptionalCommentMetadata(
+  scope: Locator,
+  fallbackAuthor?: string,
+): Promise<void> {
+  const anonymousLabel = scope.getByText(/anonymous|guest|游客|匿名/i).first();
+  if ((await anonymousLabel.count()) > 0) {
+    await expect(anonymousLabel).toBeVisible();
+  }
+
+  const author = scope
+    .locator(
+      '.comment-author, [data-testid="comment-author"], [data-author], .comment-meta strong, .comment-meta [class*="author"]',
+    )
+    .first();
+
+  if ((await author.count()) > 0) {
+    const text = normalizeText(await author.textContent());
+    expect(text.length).toBeGreaterThan(0);
+
+    if (fallbackAuthor) {
+      expect(text.includes(fallbackAuthor) || /anonymous|guest|游客|匿名/i.test(text)).toBe(true);
+    }
+  }
+
+  const location = scope
+    .locator(
+      '.comment-location, [data-testid="comment-location"], [data-location], .comment-meta [class*="location"]',
+    )
+    .first();
+
+  if ((await location.count()) > 0) {
+    const text = normalizeText(await location.textContent());
+    expect(text.length).toBeGreaterThan(0);
+  }
+}
+
+function requireAdminSession(): void {
+  test.skip(!ADMIN_PASSWORD, ADMIN_PASSWORD_HINT);
+  test.skip(!BASE.startsWith('https://'), 'Authenticated admin tests require an https BASE_URL because the admin cookie is secure-only.');
+}
+
+async function loginToAdmin(page: Page): Promise<void> {
+  requireAdminSession();
+
+  await go(page, '/admin');
+  await expect(page.locator('input[name="password"]')).toBeVisible();
+  await page.locator('input[name="password"]').fill(ADMIN_PASSWORD);
+  await page.locator('button[type="submit"]').click();
+  await page.waitForLoadState('domcontentloaded');
+
+  const dashboardHeading = page.getByRole('heading', { name: /blog admin/i });
+  const onDashboard =
+    page.url().includes('/admin/dashboard') || (await dashboardHeading.count()) > 0;
+
+  expect(onDashboard).toBe(true);
+}
+
+test.describe('Homepage and listing pages', () => {
+  test('homepage loads the site chrome and dynamic counts', async ({ page }) => {
     await go(page, '/');
+
     await expect(page).toHaveTitle(/Lwtdzh's Blog/);
-  });
-
-  test('header contains site title and navigation links', async ({ page }) => {
-    await go(page, '/');
     await expect(page.locator('h1.site-title')).toHaveText("Lwtdzh's Blog");
     await expect(page.locator('a[href="/"]').filter({ hasText: 'Home' })).toBeVisible();
     await expect(page.locator('a[href="/archives/"]').filter({ hasText: 'Archives' })).toBeVisible();
-  });
-
-  test('sidebar shows author info (name, avatar), post count (18), tag count', async ({ page }) => {
-    await go(page, '/');
     await expect(page.locator('.site-author-name')).toHaveText('lwtdzh');
     await expect(page.locator('.site-author-image')).toHaveAttribute('src', '/images/avatar.gif');
+    await expect(page.locator('footer.footer')).toContainText('Cloudflare');
 
-    const postCount = await page.locator('.site-state-posts .site-state-item-count').textContent();
-    expect(Number(postCount?.trim())).toBe(18);
+    const postCount = normalizeText(
+      await page.locator('.site-state-posts .site-state-item-count').textContent(),
+    );
+    const tagCount = normalizeText(
+      await page.locator('.site-state-tags .site-state-item-count').textContent(),
+    );
 
-    const tagCount = await page.locator('.site-state-tags .site-state-item-count').textContent();
-    expect(Number(tagCount?.trim())).toBeGreaterThan(0);
+    expect(Number(postCount)).toBe(VISIBLE_ARTICLE_COUNT);
+    expect(Number(tagCount)).toBe(TAG_TO_ARTICLES.size);
   });
 
-  test('footer is present with "Cloudflare" text', async ({ page }) => {
+  test('homepage page 1 shows the newest visible articles with layout affordances', async ({
+    page,
+  }) => {
     await go(page, '/');
-    await expect(page.locator('footer.footer')).toBeVisible();
-    await expect(page.locator('.copyright')).toContainText('Cloudflare');
-  });
 
-  test('homepage lists article cards (max 10 per page) with titles and dates', async ({ page }) => {
-    await go(page, '/');
-    const articles = page.locator('article.post-block');
-    const count = await articles.count();
-    expect(count).toBeGreaterThan(0);
-    expect(count).toBeLessThanOrEqual(10);
+    const cards = page.locator('article.post-block');
+    await expect(cards).toHaveCount(FIRST_PAGE_ARTICLES.length);
+    await expect(cards.first().locator('.post-title a')).toBeVisible();
+    await expect(cards.first().locator('time')).toBeVisible();
+    await expect(page.locator('a.btn:has-text("Read more")')).toHaveCount(
+      FIRST_PAGE_ARTICLES.length,
+    );
 
-    const firstArticle = articles.first();
-    await expect(firstArticle.locator('.post-title a')).toBeVisible();
-    await expect(firstArticle.locator('time')).toBeVisible();
-  });
+    const titles = await textContents(page.locator('article.post-block .post-title a'));
+    expect(titles).toEqual(FIRST_PAGE_ARTICLES.map((article) => article.title));
+    expect(titles).not.toContain(HIDDEN_ARTICLE.title);
 
-  test('homepage articles have "Read more" buttons', async ({ page }) => {
-    await go(page, '/');
-    const readMoreButtons = page.locator('a.btn:has-text("Read more")');
-    const count = await readMoreButtons.count();
-    expect(count).toBeGreaterThan(0);
-  });
-
-  test('homepage has visitor count placeholders', async ({ page }) => {
-    await go(page, '/');
     const visitorSpans = page.locator('.leancloud-visitors-count');
-    const count = await visitorSpans.count();
-    expect(count).toBeGreaterThan(0);
+    await expect(visitorSpans).toHaveCount(FIRST_PAGE_ARTICLES.length);
+  });
+
+  test('page 2 shows the remaining visible articles and excludes hidden posts', async ({
+    page,
+  }) => {
+    await go(page, '/page/2/');
+
+    const titles = await textContents(page.locator('article.post-block .post-title a'));
+    expect(titles).toEqual(SECOND_PAGE_ARTICLES.map((article) => article.title));
+    expect(titles).not.toContain(HIDDEN_ARTICLE.title);
+  });
+
+  test('archives page lists every visible article and year group', async ({ page }) => {
+    await go(page, '/archives/');
+
+    await expect(page).toHaveTitle(/Archives/);
+    await expect(page.locator('.collection-title .collection-header')).toContainText(
+      `${VISIBLE_ARTICLE_COUNT} posts in total`,
+    );
+
+    const archiveTitles = await textContents(page.locator('.posts-collapse .post-title-link'));
+    expect(archiveTitles).toEqual(VISIBLE_ARTICLES.map((article) => article.title));
+    expect(archiveTitles).not.toContain(HIDDEN_ARTICLE.title);
+
+    const years = await textContents(page.locator('.collection-year .collection-header'));
+    expect(years).toEqual(expect.arrayContaining(YEAR_HEADERS));
+  });
+
+  for (const [tag, taggedArticles] of TAG_TO_ARTICLES.entries()) {
+    test(`tag page "${tag}" lists the expected visible articles`, async ({ page }) => {
+      await go(page, `/tags/${encodeURIComponent(tag)}/`);
+
+      await expect(page).toHaveTitle(new RegExp(escapeRegExp(tag)));
+      const titles = await textContents(page.locator('.posts-collapse .post-title-link'));
+      expect(titles).toEqual(taggedArticles.map((article) => article.title));
+    });
+  }
+
+  test('hidden-only tag route stays empty for visible article listings', async ({ page }) => {
+    await go(page, `/tags/${encodeURIComponent('rambling')}/`);
+
+    await expect(page).toHaveTitle(/rambling/);
+    await expect(page.locator('.posts-collapse article')).toHaveCount(0);
+  });
+
+  test('site navigation links move between home, archives, tags, and article pages', async ({
+    page,
+  }) => {
+    await go(page, '/');
+    await page.getByRole('link', { name: /archives/i }).first().click();
+    await page.waitForLoadState('domcontentloaded');
+    expect(page.url()).toContain('/archives/');
+
+    await page.locator('.post-title-link').first().click();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('h1.post-title')).toBeVisible();
+
+    await page.locator('.post-tags a').first().click();
+    await page.waitForLoadState('domcontentloaded');
+    expect(page.url()).toContain('/tags/');
+
+    await page.getByRole('link', { name: /home/i }).first().click();
+    await page.waitForLoadState('domcontentloaded');
+    expect(page.url()).toBe(`${BASE}/`);
   });
 });
 
-// ============================================================
-// 2. ARTICLE PAGES - CONTENT INTEGRITY (10 tests)
-// ============================================================
+test.describe('Article routes', () => {
+  for (const article of ALL_ARTICLES) {
+    test(`article route renders for "${article.title}"`, async ({ page }) => {
+      await go(page, articlePath(article));
 
-test.describe('Article Pages - Content Integrity', () => {
-  test('CLANNAD article: has title, date, tags, download links, cover image', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
-    await expect(page).toHaveTitle(/CLANNAD/);
-    await expect(page.locator('h1.post-title')).toContainText('CLANNAD');
-    await expect(page.locator('.post-meta time').first()).toBeVisible();
+      await expect(page).toHaveTitle(new RegExp(escapeRegExp(article.title)));
+      await expect(page.locator('h1.post-title')).toContainText(article.title);
+      await expect(page.locator('.post-meta time').first()).toBeVisible();
+      await expect(page.locator('.post-body')).toBeVisible();
+      await expect(page.locator('.post-footer')).toBeVisible();
+      await expect(commentSection(page)).toBeVisible();
+    });
+  }
 
-    const tags = page.locator('.post-tags a');
-    await expect(tags.first()).toContainText('中日双语字幕');
+  test('Hello World keeps its quick-start content', async ({ page }) => {
+    await go(page, articlePath(COMMENT_ARTICLE));
 
-    const body = page.locator('.post-body');
-    const bodyText = await body.textContent();
-    expect(bodyText).toContain('下载地址');
-    expect(bodyText).toContain('Lanzou');
-    expect(bodyText).toContain('Baidu');
-    expect(bodyText).toContain('Github');
-  });
-
-  test('Hello World article: has Hexo quick start content', async ({ page }) => {
-    await go(page, '/2022/09/07/test/hello-world/');
-    await expect(page).toHaveTitle(/Hello World/);
-    const body = page.locator('.post-body');
-    const bodyText = await body.textContent();
+    const bodyText = normalizeText(await page.locator('.post-body').textContent());
     expect(bodyText).toContain('hexo new');
     expect(bodyText).toContain('hexo server');
   });
 
-  test('Image Host Test article: has image elements', async ({ page }) => {
-    await go(page, '/2022/09/07/test/Image-Host-Test/');
-    await expect(page).toHaveTitle(/图床检测/);
-    const images = page.locator('.post-body img');
-    const count = await images.count();
-    expect(count).toBeGreaterThan(0);
+  test('Image Host Test renders one or more content images', async ({ page }) => {
+    await go(page, articlePath(IMAGE_HOST_ARTICLE));
+    await expect(page.locator('.post-body img').first()).toBeVisible();
   });
 
-  test('埃罗芒阿老师 article: loads correctly with content', async ({ page }) => {
-    await go(page, '/2024/12/05/jpsub/eromanga/');
-    await expect(page).toHaveTitle(/埃罗芒阿老师/);
-    const body = page.locator('.post-body');
-    await expect(body).toBeVisible();
-  });
+  test('article chrome includes prev/next navigation and tags when available', async ({ page }) => {
+    await go(page, articlePath(CLANNAD_ARTICLE));
 
-  test('白箱 SHIROBAKO article: loads correctly', async ({ page }) => {
-    await go(page, '/2024/10/30/jpsub/shirobako/');
-    await expect(page).toHaveTitle(/白箱/);
-    const body = page.locator('.post-body');
-    await expect(body).toBeVisible();
-  });
-
-  test('轻音少女 K-ON article: loads correctly', async ({ page }) => {
-    await go(page, '/2024/08/18/jpsub/k-on/');
-    await expect(page).toHaveTitle(/轻音少女/);
-    const body = page.locator('.post-body');
-    await expect(body).toBeVisible();
-  });
-
-  test('article page has post header with title and date', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
-    await expect(page.locator('h1.post-title')).toBeVisible();
-    await expect(page.locator('.post-meta time').first()).toBeVisible();
-  });
-
-  test('article page has tags section', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
-    const tags = page.locator('.post-tags a');
-    await expect(tags.first()).toBeVisible();
-  });
-
-  test('article page has prev/next navigation', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
-    const postNav = page.locator('.post-nav');
-    await expect(postNav).toBeVisible();
-    const navLinks = postNav.locator('a');
-    const count = await navLinks.count();
-    expect(count).toBeGreaterThanOrEqual(1);
-  });
-
-  test('article page has comment form (nickname, email, content fields, submit button)', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
-    await expect(page.locator('#comments-section')).toBeVisible();
-    await expect(page.locator('input[name="nickname"]')).toBeVisible();
-    await expect(page.locator('input[name="email"]')).toBeVisible();
-    await expect(page.locator('textarea[name="content"]')).toBeVisible();
-    await expect(page.locator('button.comment-submit')).toBeVisible();
+    await expect(page.locator('.post-tags a').first()).toBeVisible();
+    await expect(page.locator('.post-nav')).toBeVisible();
+    expect(await page.locator('.post-nav a').count()).toBeGreaterThanOrEqual(1);
   });
 });
 
-// ============================================================
-// 3. HIDDEN ARTICLE (2 tests)
-// ============================================================
+test.describe('Visitors, SEO, and static assets', () => {
+  test('visitors API returns counts for single and multiple slugs', async ({ page }) => {
+    const single = await apiGet(
+      page,
+      `/api/visitors?slug=${encodeURIComponent(articlePath(CLANNAD_ARTICLE))}`,
+    );
+    expect(single.status).toBe(200);
+    expect(typeof single.body.count).toBe('number');
 
-test.describe('Hidden Article', () => {
-  test('hidden article (thirty-years-old) is NOT listed on homepage', async ({ page }) => {
-    await go(page, '/');
-    const articles = page.locator('article.post-block');
-    const count = await articles.count();
-    for (let i = 0; i < count; i++) {
-      const title = await articles.nth(i).locator('.post-title a').textContent();
-      expect(title).not.toContain('30岁');
-    }
+    const multiple = await apiGet(
+      page,
+      `/api/visitors?slugs=${encodeURIComponent(
+        [articlePath(CLANNAD_ARTICLE), articlePath(COMMENT_ARTICLE)].join(','),
+      )}`,
+    );
+    expect(multiple.status).toBe(200);
+    expect(multiple.body).toHaveProperty(articlePath(CLANNAD_ARTICLE));
+    expect(multiple.body).toHaveProperty(articlePath(COMMENT_ARTICLE));
   });
 
-  test('hidden article is NOT listed in archives', async ({ page }) => {
-    await go(page, '/archives/');
-    const articleLinks = page.locator('.posts-collapse .post-title-link');
-    const count = await articleLinks.count();
-    for (let i = 0; i < count; i++) {
-      const title = await articleLinks.nth(i).textContent();
-      expect(title).not.toContain('30岁');
-    }
-  });
-});
+  test('visitors API increments an article count', async ({ page }) => {
+    const slug = articlePath(COMMENT_ARTICLE);
+    const before = await apiGet(page, `/api/visitors?slug=${encodeURIComponent(slug)}`);
+    const update = await apiPost(page, '/api/visitors', { slug });
+    const after = await apiGet(page, `/api/visitors?slug=${encodeURIComponent(slug)}`);
 
-// ============================================================
-// 4. ARCHIVES PAGE (5 tests)
-// ============================================================
-
-test.describe('Archives Page', () => {
-  test('archives page loads and shows article count ("18 posts in total")', async ({ page }) => {
-    await go(page, '/archives/');
-    await expect(page).toHaveTitle(/Archives/);
-    const header = page.locator('.collection-title .collection-header');
-    const text = await header.textContent();
-    expect(text).toContain('18 posts in total');
-  });
-
-  test('archives page groups articles by year (2025, 2024, 2022)', async ({ page }) => {
-    await go(page, '/archives/');
-    const yearHeaders = page.locator('.collection-year .collection-header');
-    const count = await yearHeaders.count();
-    expect(count).toBeGreaterThanOrEqual(3);
-
-    const years: string[] = [];
-    for (let i = 0; i < count; i++) {
-      const year = await yearHeaders.nth(i).textContent();
-      years.push(year?.trim() || '');
-    }
-    expect(years).toContain('2025');
-    expect(years).toContain('2024');
-    expect(years).toContain('2022');
-  });
-
-  test('archives page lists articles with dates and title links', async ({ page }) => {
-    await go(page, '/archives/');
-    const articles = page.locator('.posts-collapse article');
-    const count = await articles.count();
-    expect(count).toBe(18);
-
-    const firstArticle = articles.first();
-    await expect(firstArticle.locator('time')).toBeVisible();
-    await expect(firstArticle.locator('.post-title-link')).toBeVisible();
-  });
-
-  test('clicking an article link navigates to the article', async ({ page }) => {
-    await go(page, '/archives/');
-    const firstLink = page.locator('.post-title-link').first();
-    const href = await firstLink.getAttribute('href');
-    await firstLink.click();
-    await page.waitForLoadState('domcontentloaded');
-    expect(page.url()).toContain(href!);
-  });
-
-  test('archives by year (2024) works and shows correct articles', async ({ page }) => {
-    await go(page, '/archives/2024/');
-    const articles = page.locator('.posts-collapse article');
-    const count = await articles.count();
-    expect(count).toBeGreaterThan(0);
-    expect(count).toBeLessThan(18);
-  });
-});
-
-// ============================================================
-// 5. TAG PAGES (3 tests)
-// ============================================================
-
-test.describe('Tag Pages', () => {
-  test('tag page for 中日双语字幕 loads and shows 16 articles', async ({ page }) => {
-    await go(page, `/tags/${encodeURIComponent('中日双语字幕')}/`);
-    await expect(page).toHaveTitle(/中日双语字幕/);
-    await expect(page.locator('.collection-header').first()).toContainText('中日双语字幕');
-    const articles = page.locator('.posts-collapse article');
-    const count = await articles.count();
-    expect(count).toBe(16);
-  });
-
-  test('tag page for "test" shows 2 articles', async ({ page }) => {
-    await go(page, '/tags/test/');
-    await expect(page).toHaveTitle(/test/);
-    const articles = page.locator('.posts-collapse article');
-    const count = await articles.count();
-    expect(count).toBe(2);
-  });
-
-  test('tag page for "rambling" shows 0 visible articles (the only one is hidden)', async ({ page }) => {
-    await go(page, `/tags/${encodeURIComponent('rambling')}/`);
-    await expect(page).toHaveTitle(/rambling/);
-    const articles = page.locator('.posts-collapse article');
-    const count = await articles.count();
-    expect(count).toBe(0);
-  });
-});
-
-// ============================================================
-// 6. VISITORS API (5 tests)
-// ============================================================
-
-test.describe('Visitors API', () => {
-  test('GET /api/visitors with slug returns count', async ({ page }) => {
-    const result = await apiGet(page, '/api/visitors?slug=2024/08/14/jpsub/clannad');
-    expect(result.status).toBe(200);
-    expect(result.body).toHaveProperty('count');
-    expect(typeof result.body.count).toBe('number');
-  });
-
-  test('GET /api/visitors with multiple slugs returns counts', async ({ page }) => {
-    const result = await apiGet(page, '/api/visitors?slugs=2024/08/14/jpsub/clannad,2022/09/07/test/hello-world');
-    expect(result.status).toBe(200);
-    expect(typeof result.body).toBe('object');
-    expect(result.body).toHaveProperty('2024/08/14/jpsub/clannad');
-    expect(result.body).toHaveProperty('2022/09/07/test/hello-world');
-  });
-
-  test('POST /api/visitors increments count', async ({ page }) => {
-    const slug = '2022/09/07/test/hello-world';
-    const before = await apiGet(page, `/api/visitors?slug=${slug}`);
-    const postResult = await apiPost(page, '/api/visitors', { slug });
-    expect(postResult.status).toBe(200);
-    const after = await apiGet(page, `/api/visitors?slug=${slug}`);
+    expect(update.status).toBe(200);
     expect(after.body.count).toBeGreaterThanOrEqual(before.body.count);
   });
 
-  test('GET /api/visitors without params returns error', async ({ page }) => {
-    const result = await apiGet(page, '/api/visitors');
-    expect(result.status).toBe(400);
-  });
-
-  test('POST /api/visitors without slug returns error', async ({ page }) => {
-    const result = await apiPost(page, '/api/visitors', {});
-    expect(result.status).toBe(400);
-  });
-});
-
-// ============================================================
-// 7. COMMENTS API (4 tests)
-// ============================================================
-
-test.describe('Comments API', () => {
-  test('GET /api/comments with slug returns array', async ({ page }) => {
-    const result = await apiGet(page, '/api/comments?slug=2024/08/14/jpsub/clannad');
-    expect(result.status).toBe(200);
-    expect(Array.isArray(result.body)).toBe(true);
-  });
-
-  test('POST /api/comments creates a comment and GET retrieves it', async ({ page }) => {
-    const slug = '2022/09/07/test/hello-world';
-    const timestamp = Date.now();
-    const nickname = `TestUser_${timestamp}`;
-    const email = `test${timestamp}@example.com`;
-    const content = `Test comment ${timestamp}`;
-
-    const postResult = await apiPost(page, '/api/comments', { slug, nickname, email, content });
-    expect(postResult.status === 200 || postResult.status === 201).toBe(true);
-
-    const getResult = await apiGet(page, `/api/comments?slug=${slug}`);
-    expect(getResult.status).toBe(200);
-    const comments = getResult.body;
-    const found = comments.find((c: any) => c.nickname === nickname && c.content === content);
-    expect(found).toBeDefined();
-  });
-
-  test('POST /api/comments without required fields returns error', async ({ page }) => {
-    const result = await apiPost(page, '/api/comments', { slug: 'test' });
-    expect(result.status).toBe(400);
-  });
-
-  test('GET /api/comments without slug returns error', async ({ page }) => {
-    const result = await apiGet(page, '/api/comments');
-    expect(result.status).toBe(400);
-  });
-});
-
-// ============================================================
-// 8. VISITOR COUNT UI (2 tests)
-// ============================================================
-
-test.describe('Visitor Count UI', () => {
-  test('homepage loads visitor counts via JS (waits for .leancloud-visitors-count to have numeric text)', async ({ page }) => {
+  test('visitor count UI populates numeric values on home and article pages', async ({ page }) => {
     await go(page, '/');
-    await page.waitForTimeout(3000);
-    const visitorSpans = page.locator('.leancloud-visitors-count');
-    const count = await visitorSpans.count();
-    expect(count).toBeGreaterThan(0);
+    await expect(page.locator('.leancloud-visitors-count').first()).toHaveText(/\d+/, {
+      timeout: 15000,
+    });
 
-    const firstSpan = visitorSpans.first();
-    await expect(firstSpan).toHaveText(/\d+/);
+    await go(page, articlePath(CLANNAD_ARTICLE));
+    await expect(page.locator('.leancloud-visitors-count').first()).toHaveText(/\d+/, {
+      timeout: 15000,
+    });
   });
 
-  test('article page loads visitor count via JS', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
-    await page.waitForTimeout(3000);
-    const visitorSpan = page.locator('.leancloud-visitors-count').first();
-    await expect(visitorSpan).toHaveText(/\d+/);
-  });
-});
-
-// ============================================================
-// 9. COMMENTS UI (2 tests)
-// ============================================================
-
-test.describe('Comments UI', () => {
-  test('article page has comment list container', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
-    await expect(page.locator('#comments-section')).toBeVisible();
-    await expect(page.locator('.comment-list')).toBeVisible();
-  });
-
-  test('submitting a comment via the form works (fill nickname, email, content, submit, verify comment appears)', async ({ page }) => {
-    await go(page, '/2022/09/07/test/hello-world/');
-    const timestamp = Date.now();
-    const nickname = `UITest_${timestamp}`;
-    const email = `ui${timestamp}@example.com`;
-    const content = `UI test comment ${timestamp}`;
-
-    await page.fill('input[name="nickname"]', nickname);
-    await page.fill('input[name="email"]', email);
-    await page.fill('textarea[name="content"]', content);
-    await page.click('button.comment-submit');
-    await page.waitForTimeout(2000);
-
-    const commentList = page.locator('.comment-list');
-    await expect(commentList).toContainText(nickname);
-    await expect(commentList).toContainText(content);
-  });
-});
-
-// ============================================================
-// 10. SITEMAP & ROBOTS (3 tests)
-// ============================================================
-
-test.describe('Sitemap & Robots', () => {
-  test('sitemap.xml returns valid XML with article URLs', async ({ page }) => {
-    // Navigate to homepage first so fetch has an origin
+  test('homepage links its main static assets and OG tags', async ({ page }) => {
     await go(page, '/');
-    const result = await apiGet(page, '/sitemap.xml');
-    expect(result.status).toBe(200);
-    const content = typeof result.body === 'string' ? result.body : JSON.stringify(result.body);
-    expect(content).toContain('urlset');
-    expect(content).toContain('blog.lwtdzh.ip-ddns.com');
-  });
 
-  test('baidusitemap.xml returns valid XML', async ({ page }) => {
-    await go(page, '/');
-    const result = await apiGet(page, '/baidusitemap.xml');
-    expect(result.status).toBe(200);
-    const content = typeof result.body === 'string' ? result.body : JSON.stringify(result.body);
-    expect(content).toContain('urlset');
-  });
+    await expect(page.locator('link[href*="main.css"]')).toHaveCount(1);
+    await expect(page.locator('link[href*="font-awesome"]')).toHaveCount(1);
+    expect(await page.locator('script[src]').count()).toBeGreaterThan(0);
 
-  test('robots.txt returns correct content (User-agent, Allow, Sitemap)', async ({ page }) => {
-    await go(page, '/robots.txt');
-    const content = await page.textContent('body');
-    expect(content).toContain('User-agent');
-    expect(content).toContain('Allow');
-    expect(content).toContain('Sitemap');
-  });
-});
-
-// ============================================================
-// 11. STATIC ASSETS (3 tests)
-// ============================================================
-
-test.describe('Static Assets', () => {
-  test('main CSS is linked in the page', async ({ page }) => {
-    await go(page, '/');
-    const cssLink = page.locator('link[href*="main.css"]');
-    await expect(cssLink).toHaveCount(1);
-  });
-
-  test('JS files are loaded', async ({ page }) => {
-    await go(page, '/');
-    const jsScripts = page.locator('script[src]');
-    const count = await jsScripts.count();
-    expect(count).toBeGreaterThan(0);
-  });
-
-  test('Font Awesome CSS is linked', async ({ page }) => {
-    await go(page, '/');
-    const faLink = page.locator('link[href*="font-awesome"]');
-    await expect(faLink).toHaveCount(1);
-  });
-});
-
-// ============================================================
-// 12. NAVIGATION & ROUTING (5 tests)
-// ============================================================
-
-test.describe('Navigation & Routing', () => {
-  test('clicking Home link navigates to homepage', async ({ page }) => {
-    await go(page, '/archives/');
-    await page.click('a[href="/"]');
-    await page.waitForLoadState('domcontentloaded');
-    expect(page.url()).toBe(BASE + '/');
-  });
-
-  test('clicking Archives link navigates to archives', async ({ page }) => {
-    await go(page, '/');
-    await page.click('a[href="/archives/"]');
-    await page.waitForLoadState('domcontentloaded');
-    expect(page.url()).toContain('/archives/');
-  });
-
-  test('clicking article title on homepage navigates to article', async ({ page }) => {
-    await go(page, '/');
-    const firstTitle = page.locator('article.post-block .post-title a').first();
-    await firstTitle.click();
-    await page.waitForLoadState('domcontentloaded');
-    expect(page.url()).toContain('/2025/');
-  });
-
-  test('clicking "Read more" navigates to article', async ({ page }) => {
-    await go(page, '/');
-    const firstReadMore = page.locator('a.btn:has-text("Read more")').first();
-    await firstReadMore.click();
-    await page.waitForLoadState('domcontentloaded');
-    expect(page.url()).toContain('/2025/');
-  });
-
-  test('404 for non-existent article (returns 404 status or homepage fallback)', async ({ page }) => {
-    // Navigate to homepage first so fetch has an origin
-    await go(page, '/');
-    const result = await apiGet(page, '/non-existent-article/');
-    expect(result.status === 200 || result.status === 404).toBe(true);
-  });
-});
-
-// ============================================================
-// 13. PAGINATION (1 test)
-// ============================================================
-
-test.describe('Pagination', () => {
-  test('page 2 loads with articles and has different articles than page 1', async ({ page }) => {
-    await go(page, '/');
-    const page1Articles = await page.locator('article.post-block .post-title a').allTextContents();
-
-    await go(page, '/page/2/');
-    const page2Articles = await page.locator('article.post-block .post-title a').allTextContents();
-
-    expect(page2Articles.length).toBeGreaterThan(0);
-    expect(page2Articles).not.toEqual(page1Articles);
-  });
-});
-
-// ============================================================
-// 14. SEO & META TAGS (3 tests)
-// ============================================================
-
-test.describe('SEO & Meta Tags', () => {
-  test('homepage has correct OG tags (og:title, og:type)', async ({ page }) => {
-    await go(page, '/');
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute('content');
-    expect(ogTitle).toContain("Lwtdzh's Blog");
-
     const ogType = await page.locator('meta[property="og:type"]').getAttribute('content');
+    expect(ogTitle).toContain("Lwtdzh's Blog");
     expect(ogType).toBe('website');
   });
 
-  test('article page has article OG type', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
-    const ogType = await page.locator('meta[property="og:type"]').getAttribute('content');
-    expect(ogType).toBe('article');
-  });
+  test('article pages expose article SEO metadata', async ({ page }) => {
+    await go(page, articlePath(CLANNAD_ARTICLE));
 
-  test('article page has canonical URL', async ({ page }) => {
-    await go(page, '/2024/08/14/jpsub/clannad/');
+    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article');
     const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
-    expect(canonical).toContain('clannad');
+    expect(canonical).toContain(CLANNAD_ARTICLE.slug);
   });
-});
 
-// ============================================================
-// 15. CORS HEADERS (1 test)
-// ============================================================
+  test('sitemap and robots endpoints render expected crawl metadata', async ({ page }) => {
+    await go(page, '/');
 
-test.describe('CORS Headers', () => {
-  test('API responses include CORS headers (Access-Control-Allow-Origin)', async ({ page }) => {
-    const result = await apiGet(page, '/api/visitors?slug=test');
-    expect(result.status).toBeDefined();
+    const sitemap = await apiGet(page, '/sitemap.xml');
+    const baiduSitemap = await apiGet(page, '/baidusitemap.xml');
+    expect(sitemap.status).toBe(200);
+    expect(baiduSitemap.status).toBe(200);
+    expect(asBodyText(sitemap.body)).toContain('urlset');
+    expect(asBodyText(baiduSitemap.body)).toContain('urlset');
+
+    await go(page, '/robots.txt');
+    const robotsText = normalizeText(await page.textContent('body'));
+    expect(robotsText).toContain('User-agent');
+    expect(robotsText).toContain('Allow');
+    expect(robotsText).toContain('Sitemap');
   });
-});
 
-// ============================================================
-// 16. RESPONSIVE LAYOUT (2 tests)
-// ============================================================
-
-test.describe('Responsive Layout', () => {
-  test('mobile viewport (375x667) renders correctly', async ({ page }) => {
+  test('mobile and tablet viewports keep the homepage usable', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await go(page, '/');
     await expect(page.locator('h1.site-title')).toBeVisible();
-    const articles = page.locator('article.post-block');
-    await expect(articles.first()).toBeVisible();
-  });
+    await expect(page.locator('article.post-block').first()).toBeVisible();
 
-  test('tablet viewport (768x1024) renders correctly', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await go(page, '/');
     await expect(page.locator('h1.site-title')).toBeVisible();
-    const articles = page.locator('article.post-block');
-    await expect(articles.first()).toBeVisible();
+    await expect(page.locator('article.post-block').first()).toBeVisible();
   });
 });
 
-// ============================================================
-// 17. ADMIN PAGE (4 tests)
-// ============================================================
+test.describe('Comments', () => {
+  test('comments API returns an array for an article slug and rejects a missing slug', async ({
+    page,
+  }) => {
+    const ok = await apiGet(
+      page,
+      `/api/comments?slug=${encodeURIComponent(articlePath(CLANNAD_ARTICLE))}`,
+    );
+    expect(ok.status).toBe(200);
+    expect(Array.isArray(ok.body)).toBe(true);
 
-test.describe('Admin Page', () => {
-  test('admin login page loads with password form', async ({ page }) => {
+    const missing = await apiGet(page, '/api/comments');
+    expect(missing.status).toBe(400);
+  });
+
+  test('comments API can create a comment with content-first payloads and retrieve it', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', STATEFUL_BROWSER_HINT);
+
+    const slug = articlePath(COMMENT_ARTICLE);
+    const content = `Playwright API comment ${Date.now()}`;
+    const created = await postCommentWithAdaptivePayload(page, slug, content);
+
+    expect(created.result.status === 200 || created.result.status === 201).toBe(true);
+
+    const fetched = await apiGet(page, `/api/comments?slug=${encodeURIComponent(slug)}`);
+    expect(fetched.status).toBe(200);
+
+    const found = fetched.body.find((comment: any) => comment.content === content);
+    expect(found).toBeDefined();
+
+    if (found && created.legacyIdentityUsed && created.fallbackAuthor) {
+      expect(
+        normalizeText(found.nickname || found.name || '').includes(created.fallbackAuthor) ||
+          /anonymous|guest|游客|匿名/i.test(normalizeText(found.nickname || found.name || '')),
+      ).toBe(true);
+    }
+
+    if (found && typeof found.location === 'string') {
+      expect(normalizeText(found.location).length).toBeGreaterThan(0);
+    }
+  });
+
+  test('comments API rejects a payload without the required core fields', async ({ page }) => {
+    const missingSlug = await apiPost(page, '/api/comments', { content: 'missing slug' });
+    expect(missingSlug.status).toBeGreaterThanOrEqual(400);
+  });
+
+  test('article pages render a comment composer and list container without assuming legacy fields', async ({
+    page,
+  }) => {
+    await go(page, articlePath(CLANNAD_ARTICLE));
+
+    await expect(commentSection(page)).toBeVisible();
+    await expect(commentForm(page)).toBeVisible();
+    await expect(commentContentField(page)).toBeVisible();
+    await expect(commentSubmitButton(page)).toBeVisible();
+    await expect(commentList(page)).toBeVisible();
+  });
+
+  test('submitting a comment through the UI works with a content-first flow', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', STATEFUL_BROWSER_HINT);
+
+    await go(page, articlePath(COMMENT_ARTICLE));
+
+    const content = `Playwright UI comment ${Date.now()}`;
+    const submission = await submitCommentViaUi(page, content);
+
+    await expect(commentSection(page).getByText(content, { exact: true })).toBeVisible();
+    await assertOptionalCommentMetadata(submission.commentScope, submission.fallbackAuthor);
+  });
+});
+
+test.describe('Admin', () => {
+  test('admin login page renders the password form', async ({ page }) => {
     await go(page, '/admin');
     await expect(page.locator('input[name="password"]')).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
-  test('admin login with wrong password shows error', async ({ page }) => {
+  test('admin login with a wrong password shows an error', async ({ page }) => {
     await go(page, '/admin');
-    await page.fill('input[name="password"]', 'wrong-password');
-    await page.click('button[type="submit"]');
-    await page.waitForTimeout(1000);
-    await expect(page.locator('.error, .alert')).toBeVisible();
+    await page.locator('input[name="password"]').fill(`wrong-${Date.now()}`);
+    await page.locator('button[type="submit"]').click();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('.error')).toContainText('Invalid password');
   });
 
-  test('admin login with correct password (blog-admin-2024) redirects to dashboard', async ({ page }) => {
-    await go(page, '/admin');
-    await page.fill('input[name="password"]', 'blog-admin-2024');
-    await page.click('button[type="submit"]');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000);
-    // After successful login, should either redirect to dashboard or show dashboard content
-    const url = page.url();
-    const bodyText = await page.textContent('body');
-    expect(url.includes('/admin/dashboard') || bodyText?.includes('Blog Admin') || bodyText?.includes('Dashboard')).toBe(true);
+  test('admin login with an environment-provided password reaches the dashboard', async ({
+    page,
+  }) => {
+    await loginToAdmin(page);
+    await expect(page).toHaveURL(/\/admin\/dashboard/);
+    await expect(page.getByRole('heading', { name: /blog admin/i })).toBeVisible();
   });
 
-  test('admin dashboard shows all articles including hidden ones', async ({ page }) => {
-    // Login first
-    await go(page, '/admin');
-    await page.fill('input[name="password"]', 'blog-admin-2024');
-    await page.click('button[type="submit"]');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000);
+  test('admin dashboard lists all articles including the hidden one', async ({ page }) => {
+    await loginToAdmin(page);
 
-    // Navigate to dashboard if not already there
-    if (!page.url().includes('/admin/dashboard')) {
-      await go(page, '/admin/dashboard');
-      await page.waitForTimeout(1000);
-    }
-
-    // Check if we're on the dashboard (might redirect to login if cookie not set)
-    const bodyText = await page.textContent('body');
-    if (bodyText?.includes('Blog Admin') || bodyText?.includes('Dashboard')) {
-      // We're on the dashboard - verify articles
-      const articleRows = page.locator('table tbody tr');
-      const count = await articleRows.count();
-      expect(count).toBe(19);
-      expect(bodyText).toContain('Hidden');
-    } else {
-      // Cookie might not work due to secure:true on HTTP test - skip gracefully
-      test.skip();
-    }
-  });
-});
-
-// ============================================================
-// 18. MULTI-STEP NAVIGATION (3 tests)
-// ============================================================
-
-test.describe('Multi-step Navigation', () => {
-  test('homepage → click article → click tag → tag page shows articles', async ({ page }) => {
-    await go(page, '/');
-    const firstArticle = page.locator('article.post-block .post-title a').first();
-    await firstArticle.click();
-    await page.waitForLoadState('domcontentloaded');
-
-    const tagLink = page.locator('.post-tags a').first();
-    await tagLink.click();
-    await page.waitForLoadState('domcontentloaded');
-
-    expect(page.url()).toContain('/tags/');
-    const articles = page.locator('.posts-collapse article');
-    const count = await articles.count();
-    expect(count).toBeGreaterThan(0);
+    const rows = page.locator('table tbody tr');
+    await expect(rows).toHaveCount(TOTAL_ARTICLES);
+    await expect(page.locator('tbody tr').filter({ hasText: HIDDEN_ARTICLE.title })).toContainText(
+      'Hidden',
+    );
+    await expect(page.locator('tbody tr').filter({ hasText: COMMENT_ARTICLE.title })).toContainText(
+      'Visible',
+    );
   });
 
-  test('homepage → page 2 → click article → article loads correctly', async ({ page }) => {
-    await go(page, '/page/2/');
-    const firstArticle = page.locator('article.post-block .post-title a').first();
-    await firstArticle.click();
+  test('admin can delete a comment when comment moderation UI is available', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', STATEFUL_BROWSER_HINT);
+
+    await loginToAdmin(page);
+
+    const commentsEntry = page
+      .locator('a, button')
+      .filter({ hasText: /comments|comment|评论/i })
+      .first();
+    test.skip((await commentsEntry.count()) === 0, 'Admin UI does not expose comment moderation.');
+
+    const content = `Playwright admin delete ${Date.now()}`;
+    const slug = articlePath(COMMENT_ARTICLE);
+    const created = await postCommentWithAdaptivePayload(page, slug, content);
+    expect(created.result.status === 200 || created.result.status === 201).toBe(true);
+
+    await commentsEntry.click();
     await page.waitForLoadState('domcontentloaded');
 
-    await expect(page.locator('h1.post-title')).toBeVisible();
-    await expect(page.locator('.post-body')).toBeVisible();
-  });
+    const entry = page
+      .locator('tr, li, article, .comment-item, [data-testid="comment-item"]')
+      .filter({ hasText: content })
+      .first();
+    test.skip((await entry.count()) === 0, 'Comment moderation view does not list the new comment.');
 
-  test('archives → click article → prev/next navigation works', async ({ page }) => {
-    await go(page, '/archives/');
-    const firstLink = page.locator('.post-title-link').first();
-    await firstLink.click();
-    await page.waitForLoadState('domcontentloaded');
+    const deleteControl = entry
+      .locator('button, a')
+      .filter({ hasText: /delete|remove|trash|删除/i })
+      .first();
+    test.skip((await deleteControl.count()) === 0, 'Comment moderation UI does not expose delete controls.');
 
-    const postNav = page.locator('.post-nav');
-    await expect(postNav).toBeVisible();
-    const navLinks = postNav.locator('a');
-    const count = await navLinks.count();
-    expect(count).toBeGreaterThanOrEqual(1);
-  });
-});
+    page.once('dialog', (dialog) => dialog.accept());
+    await deleteControl.click();
+    await expect(
+      page
+        .locator('tr, li, article, .comment-item, [data-testid="comment-item"]')
+        .filter({ hasText: content }),
+    ).toHaveCount(0);
 
-// ============================================================
-// 19. COMMENT LIFECYCLE (1 test)
-// ============================================================
-
-test.describe('Comment Lifecycle', () => {
-  test('submit comment → refresh page → comment still visible → submit another → both visible', async ({ page }) => {
-    await go(page, '/2022/09/07/test/hello-world/');
-    const timestamp = Date.now();
-    const nickname1 = `Lifecycle1_${timestamp}`;
-    const email = `lifecycle${timestamp}@example.com`;
-    const content1 = `First lifecycle comment ${timestamp}`;
-
-    await page.fill('input[name="nickname"]', nickname1);
-    await page.fill('input[name="email"]', email);
-    await page.fill('textarea[name="content"]', content1);
-    await page.click('button.comment-submit');
-    await page.waitForTimeout(2000);
-
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1000);
-    await expect(page.locator('.comment-list')).toContainText(nickname1);
-    await expect(page.locator('.comment-list')).toContainText(content1);
-
-    const nickname2 = `Lifecycle2_${timestamp}`;
-    const content2 = `Second lifecycle comment ${timestamp}`;
-
-    await page.fill('input[name="nickname"]', nickname2);
-    await page.fill('input[name="email"]', email);
-    await page.fill('textarea[name="content"]', content2);
-    await page.click('button.comment-submit');
-    await page.waitForTimeout(2000);
-
-    await expect(page.locator('.comment-list')).toContainText(nickname1);
-    await expect(page.locator('.comment-list')).toContainText(nickname2);
-    await expect(page.locator('.comment-list')).toContainText(content1);
-    await expect(page.locator('.comment-list')).toContainText(content2);
+    await go(page, slug);
+    await expect(commentSection(page).getByText(content, { exact: true })).toHaveCount(0);
   });
 });

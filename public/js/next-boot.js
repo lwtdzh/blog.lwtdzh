@@ -8,7 +8,7 @@ NexT.boot.registerEvents = function() {
   NexT.utils.registerCanIUseTag();
 
   // Mobile top menu bar.
-  document.querySelector('.site-nav-toggle .toggle').addEventListener('click', () => {
+  document.querySelector('.site-nav-toggle .toggle').addEventListener('click', event => {
     event.currentTarget.classList.toggle('toggle-close');
     var siteNav = document.querySelector('.site-nav');
     var animateAction = siteNav.classList.contains('site-nav-on') ? 'slideUp' : 'slideDown';
@@ -34,26 +34,40 @@ NexT.boot.registerEvents = function() {
       if (item.classList.contains(activeTabClassName)) return;
 
       var targets = document.querySelectorAll('.sidebar-panel');
-      var target = targets[index];
-      var currentTarget = targets[1 - index];
-      window.anime({
-        targets : currentTarget,
-        duration: TAB_ANIMATE_DURATION,
-        easing  : 'linear',
-        opacity : 0,
-        complete: () => {
-          // Prevent adding TOC to Overview if Overview was selected when close & open sidebar.
-          currentTarget.classList.remove(activePanelClassName);
-          target.style.opacity = 0;
-          target.classList.add(activePanelClassName);
+      var target = targets[index] || targets[0];
+      var currentTarget = document.querySelector('.sidebar-panel-active') || target;
+      if (!target || !currentTarget) return;
+
+      var finishToggle = () => {
+        currentTarget.classList.remove(activePanelClassName);
+        target.style.opacity = 0;
+        target.classList.add(activePanelClassName);
+
+        if (typeof window.anime === 'function') {
           window.anime({
             targets : target,
             duration: TAB_ANIMATE_DURATION,
             easing  : 'linear',
             opacity : 1
           });
+        } else {
+          target.style.opacity = 1;
         }
-      });
+      };
+
+      if (target === currentTarget) {
+        finishToggle();
+      } else if (typeof window.anime === 'function') {
+        window.anime({
+          targets : currentTarget,
+          duration: TAB_ANIMATE_DURATION,
+          easing  : 'linear',
+          opacity : 0,
+          complete: finishToggle
+        });
+      } else {
+        finishToggle();
+      }
 
       [...item.parentNode.children].forEach(element => {
         element.classList.remove(activeTabClassName);

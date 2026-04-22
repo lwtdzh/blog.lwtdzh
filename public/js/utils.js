@@ -343,6 +343,9 @@ NexT.utils = {
    */
   initSidebarDimension: function() {
     var sidebarNav = document.querySelector('.sidebar-nav');
+    var siteOverviewWrap = document.querySelector('.site-overview-wrap');
+    var postTocWrap = document.querySelector('.post-toc-wrap');
+    if (!sidebarNav || !siteOverviewWrap) return;
     var sidebarNavHeight = sidebarNav.style.display !== 'none' ? sidebarNav.offsetHeight : 0;
     var sidebarOffset = CONFIG.sidebar.offset || 12;
     var sidebarb2tHeight = CONFIG.back2top.enable && CONFIG.back2top.sidebar ? document.querySelector('.back-to-top').offsetHeight : 0;
@@ -351,21 +354,24 @@ NexT.utils = {
     if (CONFIG.scheme === 'Pisces' || CONFIG.scheme === 'Gemini') sidebarSchemePadding += (sidebarOffset * 2) - 22;
     // Initialize Sidebar & TOC Height.
     var sidebarWrapperHeight = document.body.offsetHeight - sidebarSchemePadding + 'px';
-    document.querySelector('.site-overview-wrap').style.maxHeight = sidebarWrapperHeight;
-    document.querySelector('.post-toc-wrap').style.maxHeight = sidebarWrapperHeight;
+    siteOverviewWrap.style.maxHeight = sidebarWrapperHeight;
+    postTocWrap && (postTocWrap.style.maxHeight = sidebarWrapperHeight);
   },
 
   updateSidebarPosition: function() {
     var sidebarNav = document.querySelector('.sidebar-nav');
+    if (!sidebarNav) return;
     var hasTOC = document.querySelector('.post-toc');
     if (hasTOC) {
       sidebarNav.style.display = '';
       sidebarNav.classList.add('motion-element');
-      document.querySelector('.sidebar-nav-toc').click();
+      var tocTrigger = document.querySelector('.sidebar-nav-toc');
+      tocTrigger && tocTrigger.click();
     } else {
       sidebarNav.style.display = 'none';
       sidebarNav.classList.remove('motion-element');
-      document.querySelector('.sidebar-nav-overview').click();
+      var overviewTrigger = document.querySelector('.sidebar-nav-overview');
+      overviewTrigger && overviewTrigger.click();
     }
     NexT.utils.initSidebarDimension();
     if (!this.isDesktop() || CONFIG.scheme === 'Pisces' || CONFIG.scheme === 'Gemini') return;

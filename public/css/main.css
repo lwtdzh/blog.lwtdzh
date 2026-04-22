@@ -2701,6 +2701,13 @@ body {
   color: var(--primary-color);
 }
 
+.comment-note {
+  margin: -10px 0 20px;
+  color: #8b95a1;
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
 .comment-list {
   margin-bottom: 30px;
 }
@@ -2733,6 +2740,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 8px;
 }
 
@@ -2740,6 +2748,14 @@ body {
   font-weight: 600;
   color: #333;
   font-size: 0.95em;
+}
+
+.comment-location {
+  color: var(--primary-color);
+  font-size: 0.82em;
+  background: rgba(74, 144, 217, 0.12);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
 .comment-time {
