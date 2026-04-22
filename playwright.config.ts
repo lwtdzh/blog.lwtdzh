@@ -2,10 +2,11 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  timeout: 60000,
+  timeout: 90000,
+  workers: 3,
   retries: 2,
   use: {
-    baseURL: process.env.BASE_URL || 'https://bangdream.pages.dev',
+    baseURL: process.env.BASE_URL || 'https://blog.lwtdzh.ip-ddns.com',
     headless: true,
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
@@ -17,6 +18,14 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { browserName: 'chromium' },
+    },
+    {
+      name: 'firefox',
+      use: { browserName: 'firefox' },
+    },
+    {
+      name: 'webkit',
+      use: { browserName: 'webkit' },
     },
   ],
 });

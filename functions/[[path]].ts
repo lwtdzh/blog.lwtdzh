@@ -1,5 +1,5 @@
 import app from '../src/index';
 
 export const onRequest: PagesFunction = async (context) => {
-  return app.fetch(context.request, context.env, context);
+  return app.fetch(context.request, context.env, context as any);
 };
