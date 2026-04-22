@@ -1,7 +1,6 @@
-# pages_build_output_dir is NOT set here — build config comes from the CF dashboard.
-# This file is used for local dev and D1 binding only.
 name = "blog-lwtdzh"
 compatibility_date = "2024-01-01"
+pages_build_output_dir = "public"
 
 [[d1_databases]]
 binding = "DB"
