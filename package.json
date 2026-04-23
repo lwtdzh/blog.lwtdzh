@@ -15,7 +15,6 @@
     "url": "git@github-lwtdzh:lwtdzh/blog.lwtdzh.git"
   },
   "dependencies": {
-    "easymde": "^2.20.0",
     "hono": "^4.4.0",
     "marked": "^12.0.0"
   },
