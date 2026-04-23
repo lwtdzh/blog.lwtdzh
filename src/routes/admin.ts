@@ -13,6 +13,10 @@ import {
   type ParsedArticleFile,
 } from '../lib/article-files';
 import {
+  isDeployHookConfigured,
+  triggerDeployHook,
+} from '../lib/cloudflare-deploy-hook';
+import {
   createGitHubArticleFile,
   deleteGitHubArticleFile,
   getGitHubArticleFile,
@@ -35,6 +39,7 @@ type Bindings = {
   ADMIN_PWD: string;
   DB: D1Database;
   GITHUB_TOKEN?: string;
+  CLOUDFLARE_DEPLOY_HOOK?: string;
 };
 
 type AdminEnv = {
@@ -113,7 +118,7 @@ function dashboardNotice(message?: string): string | undefined {
     return 'Comment deleted.';
   }
   if (message === 'article_deleted') {
-    return 'Article deleted from GitHub. Cloudflare will redeploy the site automatically.';
+    return 'Article deleted from GitHub.';
   }
   return undefined;
 }
@@ -134,15 +139,21 @@ function dashboardError(error?: string): string | undefined {
   if (error === 'article_delete_failed') {
     return 'Could not delete the article from GitHub. Please try again.';
   }
+  if (error === 'deploy_hook_not_configured') {
+    return 'The GitHub article change succeeded, but automatic redeploy is not configured. Set the CLOUDFLARE_DEPLOY_HOOK Pages secret.';
+  }
+  if (error === 'deploy_hook_failed') {
+    return 'The GitHub article change succeeded, but triggering the Cloudflare deploy hook failed. Check the hook URL and Pages build settings.';
+  }
   return undefined;
 }
 
 function editorNotice(message?: string): string | undefined {
   if (message === 'article_created') {
-    return 'Article created in GitHub. Cloudflare will redeploy the site automatically.';
+    return 'Article created in GitHub.';
   }
   if (message === 'article_saved') {
-    return 'Article updated in GitHub. Cloudflare will redeploy the site automatically.';
+    return 'Article updated in GitHub.';
   }
   return undefined;
 }
@@ -153,6 +164,12 @@ function editorError(error?: string): string | undefined {
   }
   if (error === 'article_load_failed') {
     return 'Could not load the requested article from GitHub.';
+  }
+  if (error === 'deploy_hook_not_configured') {
+    return 'The GitHub article change succeeded, but automatic redeploy is not configured. Set the CLOUDFLARE_DEPLOY_HOOK Pages secret.';
+  }
+  if (error === 'deploy_hook_failed') {
+    return 'The GitHub article change succeeded, but triggering the Cloudflare deploy hook failed. Check the hook URL and Pages build settings.';
   }
   return undefined;
 }
@@ -192,6 +209,44 @@ function stripSurroundingSlashes(value: string): string {
 function bodyValue(body: ParsedBody, key: string): string {
   const value = body[key];
   return typeof value === 'string' ? value : '';
+}
+
+type DeployHookState = 'triggered' | 'not_configured' | 'failed';
+
+async function triggerDeployHookAfterWrite(env: Bindings): Promise<DeployHookState> {
+  if (!isDeployHookConfigured(env)) {
+    return 'not_configured';
+  }
+
+  try {
+    await triggerDeployHook(env);
+    return 'triggered';
+  } catch {
+    return 'failed';
+  }
+}
+
+function buildRedirectWithDeployHookState(
+  basePath: string,
+  message: string,
+  deployHookState: DeployHookState,
+  extraParams?: Record<string, string>,
+): string {
+  const params = new URLSearchParams({ message });
+
+  if (extraParams) {
+    Object.entries(extraParams).forEach(([key, value]) => {
+      params.set(key, value);
+    });
+  }
+
+  if (deployHookState === 'not_configured') {
+    params.set('error', 'deploy_hook_not_configured');
+  } else if (deployHookState === 'failed') {
+    params.set('error', 'deploy_hook_failed');
+  }
+
+  return `${basePath}?${params.toString()}`;
 }
 
 function toFallbackArticleSummary(): AdminArticleSummary[] {
@@ -561,9 +616,15 @@ admin.post('/articles/save', requireAuth, async (c) => {
         editorValue.title.trim(),
         currentArticle.sha,
       );
+      const deployHookState = await triggerDeployHookAfterWrite(c.env);
 
       return c.redirect(
-        `/admin/articles/edit?path=${encodeURIComponent(savedArticle.sourcePath)}&message=article_saved`,
+        buildRedirectWithDeployHookState(
+          '/admin/articles/edit',
+          'article_saved',
+          deployHookState,
+          { path: savedArticle.sourcePath },
+        ),
       );
     }
 
@@ -577,9 +638,15 @@ admin.post('/articles/save', requireAuth, async (c) => {
       articleFile,
       editorValue.title.trim(),
     );
+    const deployHookState = await triggerDeployHookAfterWrite(c.env);
 
     return c.redirect(
-      `/admin/articles/edit?path=${encodeURIComponent(createdArticle.sourcePath)}&message=article_created`,
+      buildRedirectWithDeployHookState(
+        '/admin/articles/edit',
+        'article_created',
+        deployHookState,
+        { path: createdArticle.sourcePath },
+      ),
     );
   } catch (error: any) {
     return c.html(
@@ -615,7 +682,14 @@ admin.post('/articles/delete', requireAuth, async (c) => {
       title || currentArticle.data.title,
       currentArticle.sha,
     );
-    return c.redirect('/admin/dashboard?message=article_deleted');
+    const deployHookState = await triggerDeployHookAfterWrite(c.env);
+    return c.redirect(
+      buildRedirectWithDeployHookState(
+        '/admin/dashboard',
+        'article_deleted',
+        deployHookState,
+      ),
+    );
   } catch {
     return c.redirect('/admin/dashboard?error=article_delete_failed');
   }

@@ -10,6 +10,7 @@ type Bindings = {
   DB: D1Database;
   ADMIN_PWD: string;
   GITHUB_TOKEN?: string;
+  CLOUDFLARE_DEPLOY_HOOK?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
