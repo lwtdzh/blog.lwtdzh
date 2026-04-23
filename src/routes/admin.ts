@@ -120,6 +120,9 @@ function dashboardNotice(message?: string): string | undefined {
   if (message === 'article_deleted') {
     return 'Article deleted from GitHub.';
   }
+  if (message === 'deploy_triggered') {
+    return 'Cloudflare deploy triggered for the latest main branch.';
+  }
   return undefined;
 }
 
@@ -140,10 +143,10 @@ function dashboardError(error?: string): string | undefined {
     return 'Could not delete the article from GitHub. Please try again.';
   }
   if (error === 'deploy_hook_not_configured') {
-    return 'The GitHub article change succeeded, but automatic redeploy is not configured. Set the CLOUDFLARE_DEPLOY_HOOK Pages secret.';
+    return 'Cloudflare deploy is not configured. Set the CLOUDFLARE_DEPLOY_HOOK Pages secret.';
   }
   if (error === 'deploy_hook_failed') {
-    return 'The GitHub article change succeeded, but triggering the Cloudflare deploy hook failed. Check the hook URL and Pages build settings.';
+    return 'Triggering the Cloudflare deploy hook failed. Check the hook URL and Pages build settings.';
   }
   return undefined;
 }
@@ -154,6 +157,9 @@ function editorNotice(message?: string): string | undefined {
   }
   if (message === 'article_saved') {
     return 'Article updated in GitHub.';
+  }
+  if (message === 'deploy_triggered') {
+    return 'Cloudflare deploy triggered for the latest main branch.';
   }
   return undefined;
 }
@@ -166,10 +172,10 @@ function editorError(error?: string): string | undefined {
     return 'Could not load the requested article from GitHub.';
   }
   if (error === 'deploy_hook_not_configured') {
-    return 'The GitHub article change succeeded, but automatic redeploy is not configured. Set the CLOUDFLARE_DEPLOY_HOOK Pages secret.';
+    return 'Cloudflare deploy is not configured. Set the CLOUDFLARE_DEPLOY_HOOK Pages secret.';
   }
   if (error === 'deploy_hook_failed') {
-    return 'The GitHub article change succeeded, but triggering the Cloudflare deploy hook failed. Check the hook URL and Pages build settings.';
+    return 'Triggering the Cloudflare deploy hook failed. Check the hook URL and Pages build settings.';
   }
   return undefined;
 }
@@ -211,42 +217,27 @@ function bodyValue(body: ParsedBody, key: string): string {
   return typeof value === 'string' ? value : '';
 }
 
-type DeployHookState = 'triggered' | 'not_configured' | 'failed';
+function buildAdminRedirect(
+  path: string,
+  params: Record<string, string | undefined>,
+): string {
+  const url = new URL(path, 'https://admin.local');
 
-async function triggerDeployHookAfterWrite(env: Bindings): Promise<DeployHookState> {
-  if (!isDeployHookConfigured(env)) {
-    return 'not_configured';
-  }
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      url.searchParams.set(key, value);
+    }
+  });
 
-  try {
-    await triggerDeployHook(env);
-    return 'triggered';
-  } catch {
-    return 'failed';
-  }
+  return `${url.pathname}${url.search}`;
 }
 
-function buildRedirectWithDeployHookState(
-  basePath: string,
-  message: string,
-  deployHookState: DeployHookState,
-  extraParams?: Record<string, string>,
-): string {
-  const params = new URLSearchParams({ message });
-
-  if (extraParams) {
-    Object.entries(extraParams).forEach(([key, value]) => {
-      params.set(key, value);
-    });
+function normalizeAdminReturnTo(value: string | undefined, fallback: string): string {
+  const trimmed = value?.trim();
+  if (!trimmed || !trimmed.startsWith('/admin')) {
+    return fallback;
   }
-
-  if (deployHookState === 'not_configured') {
-    params.set('error', 'deploy_hook_not_configured');
-  } else if (deployHookState === 'failed') {
-    params.set('error', 'deploy_hook_failed');
-  }
-
-  return `${basePath}?${params.toString()}`;
+  return trimmed;
 }
 
 function toFallbackArticleSummary(): AdminArticleSummary[] {
@@ -490,6 +481,27 @@ admin.post('/logout', (c) => {
   return c.redirect('/admin?message=logged_out');
 });
 
+admin.post('/deploy', requireAuth, async (c) => {
+  const body = await c.req.parseBody();
+  const returnTo = normalizeAdminReturnTo(
+    bodyValue(body as ParsedBody, 'returnTo'),
+    '/admin/dashboard',
+  );
+
+  if (!isDeployHookConfigured(c.env)) {
+    return c.redirect(
+      buildAdminRedirect(returnTo, { error: 'deploy_hook_not_configured' }),
+    );
+  }
+
+  try {
+    await triggerDeployHook(c.env);
+    return c.redirect(buildAdminRedirect(returnTo, { message: 'deploy_triggered' }));
+  } catch {
+    return c.redirect(buildAdminRedirect(returnTo, { error: 'deploy_hook_failed' }));
+  }
+});
+
 admin.post('/comments/delete', requireAuth, async (c) => {
   const body = await c.req.parseBody();
   const commentIdValue = bodyValue(body as ParsedBody, 'commentId');
@@ -616,14 +628,14 @@ admin.post('/articles/save', requireAuth, async (c) => {
         editorValue.title.trim(),
         currentArticle.sha,
       );
-      const deployHookState = await triggerDeployHookAfterWrite(c.env);
 
       return c.redirect(
-        buildRedirectWithDeployHookState(
+        buildAdminRedirect(
           '/admin/articles/edit',
-          'article_saved',
-          deployHookState,
-          { path: savedArticle.sourcePath },
+          {
+            message: 'article_saved',
+            path: savedArticle.sourcePath,
+          },
         ),
       );
     }
@@ -638,14 +650,14 @@ admin.post('/articles/save', requireAuth, async (c) => {
       articleFile,
       editorValue.title.trim(),
     );
-    const deployHookState = await triggerDeployHookAfterWrite(c.env);
 
     return c.redirect(
-      buildRedirectWithDeployHookState(
+      buildAdminRedirect(
         '/admin/articles/edit',
-        'article_created',
-        deployHookState,
-        { path: createdArticle.sourcePath },
+        {
+          message: 'article_created',
+          path: createdArticle.sourcePath,
+        },
       ),
     );
   } catch (error: any) {
@@ -682,14 +694,7 @@ admin.post('/articles/delete', requireAuth, async (c) => {
       title || currentArticle.data.title,
       currentArticle.sha,
     );
-    const deployHookState = await triggerDeployHookAfterWrite(c.env);
-    return c.redirect(
-      buildRedirectWithDeployHookState(
-        '/admin/dashboard',
-        'article_deleted',
-        deployHookState,
-      ),
-    );
+    return c.redirect(buildAdminRedirect('/admin/dashboard', { message: 'article_deleted' }));
   } catch {
     return c.redirect('/admin/dashboard?error=article_delete_failed');
   }

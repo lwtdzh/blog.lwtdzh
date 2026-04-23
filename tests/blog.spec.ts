@@ -924,6 +924,7 @@ test.describe('Admin', () => {
     await loginToAdmin(page);
     await expect(page).toHaveURL(/\/admin\/dashboard/);
     await expect(page.getByRole('heading', { name: /blog admin/i })).toBeVisible();
+    await expect(page.getByTestId('deploy-button')).toBeVisible();
   });
 
   test('admin dashboard lists all articles including the hidden one', async ({ page }) => {
@@ -1028,6 +1029,7 @@ test.describe('Admin article CRUD', () => {
       await page.waitForLoadState('domcontentloaded');
 
       await expect(page).toHaveURL(/\/admin\/articles\/new/);
+      await expect(page.getByTestId('deploy-button')).toBeVisible();
       await page.getByTestId('article-title-input').fill(initialTitle);
       await page.getByTestId('article-date-input').fill('2026-04-22T10:30:45');
       await page.getByTestId('article-slug-input').fill(`/${slug}/`);
@@ -1043,6 +1045,7 @@ test.describe('Admin article CRUD', () => {
 
       await expect(page).toHaveURL(/\/admin\/articles\/edit\?/);
       await expect(page.locator('.notice-box')).toContainText('Article created');
+      await expect(page.locator('.notice-box')).not.toContainText(/deploy/i);
 
       sourcePath = await page
         .getByTestId('article-editor-form')
@@ -1067,6 +1070,7 @@ test.describe('Admin article CRUD', () => {
       await page.waitForLoadState('domcontentloaded');
 
       await expect(page.locator('.notice-box')).toContainText('Article updated');
+      await expect(page.locator('.notice-box')).not.toContainText(/deploy/i);
       await expect(page.getByTestId('article-title-input')).toHaveValue(updatedTitle);
       await expect(page.getByTestId('article-hidden-input')).toBeChecked();
 

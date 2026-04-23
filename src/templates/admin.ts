@@ -355,6 +355,13 @@ function renderShell(
 </html>`;
 }
 
+function renderDeployForm(returnTo: string): string {
+  return `<form method="POST" action="/admin/deploy" class="inline-form">
+    <input type="hidden" name="returnTo" value="${escapeHtml(returnTo)}">
+    <button type="submit" class="btn btn-primary" data-testid="deploy-button">Deploy</button>
+  </form>`;
+}
+
 export function renderLoginPage(error?: string, notice?: string): string {
   return renderShell(
     'Admin Login',
@@ -444,6 +451,7 @@ export function renderDashboard(
     `<div class="admin-header">
       <h1>Blog Admin</h1>
       <div class="header-actions">
+        ${renderDeployForm('/admin/dashboard')}
         <a href="/" target="_blank">View Site</a>
         <form method="POST" action="/admin/logout" class="inline-form">
           <button type="submit" class="btn btn-secondary">Logout</button>
@@ -454,7 +462,7 @@ export function renderDashboard(
       ${notice ? `<div class="notice-box">${escapeHtml(notice)}</div>` : ''}
       ${error ? `<div class="warning-box">${escapeHtml(error)}</div>` : ''}
       <div class="info-box">
-        Articles are stored as Markdown files in <code>content/posts/</code> and saved directly to GitHub main.
+        Articles are stored as Markdown files in <code>content/posts/</code> and saved directly to GitHub main. Use Deploy when you want Cloudflare Pages to publish the newest main branch.
         ${options.githubBacked ? '<span class="status-live">Live GitHub article list enabled.</span>' : ''}
       </div>
       <div class="card">
@@ -512,12 +520,16 @@ export function renderArticleEditorPage(
       </form>
     `
     : '';
+  const deployReturnTo = article.sourcePath
+    ? `/admin/articles/edit?path=${encodeURIComponent(article.sourcePath)}`
+    : '/admin/articles/new';
 
   return renderShell(
     pageTitle,
     `<div class="admin-header">
       <h1>${escapeHtml(pageTitle)}</h1>
       <div class="header-actions">
+        ${renderDeployForm(deployReturnTo)}
         <a href="/admin/dashboard">Back to Dashboard</a>
         ${viewArticleLink}
         <form method="POST" action="/admin/logout" class="inline-form">
