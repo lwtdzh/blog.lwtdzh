@@ -16,28 +16,6 @@ export interface ArticleData {
 
 export const articles: ArticleData[] = [
   {
-    slug: "cc",
-    title: "cc",
-    date: "2026-04-23T10:45:48+08:00",
-    updated: "2026-04-23T10:45:54+08:00",
-    description: "ccc",
-    tags: [],
-    cover: "",
-    hidden: false,
-    content: `cccc`,
-  },
-  {
-    slug: "AAA",
-    title: "ggg2",
-    date: "2026-04-23T10:17:25+08:00",
-    updated: "2026-04-23T10:45:13+08:00",
-    description: "SSSSSaa",
-    tags: [],
-    cover: "",
-    hidden: false,
-    content: `DSFSDGFWEGFaa`,
-  },
-  {
     slug: "2025/06/18/jpsub/dunyong",
     title: "「盾之勇者成名录」第一季简日双语字幕、日文字幕、中日字幕",
     date: "2025-06-18T20:18:41+08:00",

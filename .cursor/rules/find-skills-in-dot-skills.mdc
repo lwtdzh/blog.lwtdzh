@@ -1,0 +1,14 @@
+---
+description: Find project-specific reusable skills in the shared .skills root before inventing new local instructions.
+alwaysApply: true
+---
+
+Cursor does not natively auto-discover `SKILL.md` files from `.skills`, so use this rule as the bridge.
+
+For project-specific reusable workflows, first inspect `.skills/**/SKILL.md` and use the most relevant skill.
+
+When regression testing this blog, load and follow `.skills/blog-regression-checks/SKILL.md`.
+
+Treat `.skills` as the shared skill source of truth.
+
+Do not create Cursor-only copies of individual skills unless the repository owner explicitly asks for a separate Cursor rule.
