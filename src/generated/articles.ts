@@ -16,15 +16,26 @@ export interface ArticleData {
 
 export const articles: ArticleData[] = [
   {
-    slug: "AAA",
-    title: "ggg",
-    date: "2026-04-23T10:17:25+08:00",
-    updated: "2026-04-23T10:17:41+08:00",
-    description: "SSSSS",
+    slug: "cc",
+    title: "cc",
+    date: "2026-04-23T10:45:48+08:00",
+    updated: "2026-04-23T10:45:54+08:00",
+    description: "ccc",
     tags: [],
     cover: "",
     hidden: false,
-    content: `DSFSDGFWEGF`,
+    content: `cccc`,
+  },
+  {
+    slug: "AAA",
+    title: "ggg2",
+    date: "2026-04-23T10:17:25+08:00",
+    updated: "2026-04-23T10:45:13+08:00",
+    description: "SSSSSaa",
+    tags: [],
+    cover: "",
+    hidden: false,
+    content: `DSFSDGFWEGFaa`,
   },
   {
     slug: "2025/06/18/jpsub/dunyong",
